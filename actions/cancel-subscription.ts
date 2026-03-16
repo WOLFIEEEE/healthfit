@@ -1,6 +1,6 @@
 "use server";
 
-import { dodoClient } from "@/lib/dodo-payments/client";
+import { getDodoClient } from "@/lib/dodo-payments/client";
 import { db } from "@/lib/drizzle/client";
 import { subscriptions } from "@/lib/drizzle/schema";
 import { ServerActionRes } from "@/types/server-action";
@@ -10,7 +10,7 @@ export async function cancelSubscription(props: {
   subscriptionId: string;
 }): ServerActionRes {
   try {
-    const res = await dodoClient.subscriptions.update(props.subscriptionId, {
+    await getDodoClient().subscriptions.update(props.subscriptionId, {
       cancel_at_next_billing_date: true,
     });
 

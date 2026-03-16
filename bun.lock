@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "dodo-supabase-subscription-starter",
+      "name": "healthfit",
       "dependencies": {
         "@dodopayments/nextjs": "^0.1.8",
         "@hookform/resolvers": "^5.2.1",

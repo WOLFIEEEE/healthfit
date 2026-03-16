@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/drizzle/client";
 import { getUser } from "./get-user";
-import { adminAuthClient } from "@/lib/supabase/admin";
+import { getAdminAuthClient } from "@/lib/supabase/admin";
 import { ServerActionRes } from "@/types/server-action";
 import { users } from "@/lib/drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -17,7 +17,7 @@ export async function deleteAccount(): ServerActionRes {
       };
     }
 
-    const { error } = await adminAuthClient.deleteUser(userRes.data.id);
+    const { error } = await getAdminAuthClient().deleteUser(userRes.data.id);
     if (error) {
       return {
         success: false,

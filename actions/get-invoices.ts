@@ -14,6 +14,10 @@ export async function getInvoices(): ServerActionRes<SelectPayment[]> {
       return { success: false, error: "Subscription not found" };
     }
 
+    if (!subscriptionRes.data.user.dodoCustomerId) {
+      return { success: true, data: [] };
+    }
+
     const invoices = await db.query.payments.findMany({
       where: eq(payments.customerId, subscriptionRes.data.user.dodoCustomerId),
     });

@@ -1,6 +1,6 @@
-// @ts-ignore-next-line
+// @ts-expect-error Deno edge runtime dependency is resolved remotely.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
-// @ts-ignore-next-line
+// @ts-expect-error Deno edge runtime dependency is resolved remotely.
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 
 const corsHeaders = {
@@ -10,13 +10,13 @@ const corsHeaders = {
 };
 
 const supabase = createClient(
-  // @ts-ignore-next-line
+  // @ts-expect-error Deno.env is available in the edge runtime.
   Deno.env.get("SUPABASE_URL")!,
-  // @ts-ignore-next-line
+  // @ts-expect-error Deno.env is available in the edge runtime.
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
-// @ts-ignore-next-line
+// @ts-expect-error Deno.serve is available in the edge runtime.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  // @ts-ignore-next-line
+  // @ts-expect-error Deno.env is available in the edge runtime.
   const dodoWebhookSecret = Deno.env.get("DODO_WEBHOOK_SECRET");
   if (!dodoWebhookSecret) {
     console.error("DODO_WEBHOOK_SECRET is not set.");
@@ -78,6 +78,7 @@ Deno.serve(async (req) => {
         await updateUserTier({
           dodoCustomerId: event.data.customer.customer_id,
           subscriptionId: event.data.subscription_id,
+          productId: event.data.product_id,
         });
         break;
 
@@ -117,7 +118,9 @@ Deno.serve(async (req) => {
   });
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function managePayment(event: any) {
+  const userId = await getUserIdFromCustomerId(event.data.customer.customer_id);
   const data = {
     payment_id: event.data.payment_id,
     brand_id: event.data.brand_id,
@@ -129,6 +132,7 @@ async function managePayment(event: any) {
     status: event.data.status,
     subscription_id: event.data.subscription_id,
     total_amount: event.data.total_amount,
+    user_id: userId,
     customer_email: event.data.customer.email,
     customer_name: event.data.customer.name,
     customer_id: event.data.customer.customer_id,
@@ -161,9 +165,12 @@ async function managePayment(event: any) {
   console.log(`Payment ${data.payment_id} upserted successfully.`);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function manageSubscription(event: any) {
+  const userId = await getUserIdFromCustomerId(event.data.customer.customer_id);
   const data = {
     subscription_id: event.data.subscription_id,
+    user_id: userId,
     addons: event.data.addons,
     billing: event.data.billing,
     cancel_at_next_billing_date: event.data.cancel_at_next_billing_date,
@@ -201,10 +208,15 @@ async function manageSubscription(event: any) {
 async function updateUserTier(props: {
   dodoCustomerId: string;
   subscriptionId: string;
+  productId: string;
 }) {
+  const planKey = resolvePlanKey(props.productId);
   const { error } = await supabase
     .from("users")
-    .update({ current_subscription_id: props.subscriptionId })
+    .update({
+      current_subscription_id: props.subscriptionId,
+      current_plan_key: planKey,
+    })
     .eq("dodo_customer_id", props.dodoCustomerId);
 
   if (error) throw error;
@@ -214,9 +226,37 @@ async function updateUserTier(props: {
 async function downgradeToHobbyPlan(props: { dodoCustomerId: string }) {
   const { error } = await supabase
     .from("users")
-    .update({ current_subscription_id: null })
+    .update({ current_subscription_id: null, current_plan_key: "starter" })
     .eq("dodo_customer_id", props.dodoCustomerId);
 
   if (error) throw error;
   console.log(`User downgraded for customer ${props.dodoCustomerId}.`);
+}
+
+async function getUserIdFromCustomerId(dodoCustomerId: string) {
+  const { data, error } = await supabase
+    .from("users")
+    .select("supabase_user_id")
+    .eq("dodo_customer_id", dodoCustomerId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data?.supabase_user_id ?? null;
+}
+
+function resolvePlanKey(productId: string) {
+  // @ts-expect-error Deno.env is available in the edge runtime.
+  if (productId === Deno.env.get("DODO_ELITE_PRODUCT_ID")) {
+    return "elite";
+  }
+
+  // @ts-expect-error Deno.env is available in the edge runtime.
+  if (productId === Deno.env.get("DODO_PRO_PRODUCT_ID")) {
+    return "pro";
+  }
+
+  return "starter";
 }

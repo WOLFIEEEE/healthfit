@@ -1,6 +1,6 @@
 "use server";
 
-import { dodoClient } from "@/lib/dodo-payments/client";
+import { getDodoClient } from "@/lib/dodo-payments/client";
 import { ServerActionRes } from "@/types/server-action";
 import { Customer } from "dodopayments/resources/index.mjs";
 
@@ -9,13 +9,21 @@ export async function createDodoCustomer(props: {
   name?: string;
 }): ServerActionRes<Customer> {
   try {
-    const customer = await dodoClient.customers.create({
+    if (!process.env.DODO_PAYMENTS_API_KEY) {
+      return { success: false, error: "Dodo Payments is not configured" };
+    }
+
+    const customer = await getDodoClient().customers.create({
       email: props.email,
       name: props.name ? props.name : props.email.split("@")[0],
     });
 
     return { success: true, data: customer };
   } catch (error) {
-    return { success: false, error: "Failed to create customer" };
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to create customer",
+    };
   }
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { dodoClient } from "@/lib/dodo-payments/client";
+import { getDodoClient } from "@/lib/dodo-payments/client";
 import { ServerActionRes } from "@/types/server-action";
 
 export async function changePlan(props: {
@@ -8,7 +8,7 @@ export async function changePlan(props: {
   productId: string;
 }): ServerActionRes {
   try {
-    await dodoClient.subscriptions.changePlan(props.subscriptionId, {
+    await getDodoClient().subscriptions.changePlan(props.subscriptionId, {
       product_id: props.productId,
       proration_billing_mode: "prorated_immediately",
       quantity: 1,

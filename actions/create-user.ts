@@ -1,45 +1,112 @@
 "use server";
 
-import { db } from "@/lib/drizzle/client";
-import { users } from "@/lib/drizzle/schema";
-import { ServerActionRes } from "@/types/server-action";
-import { getUser } from "./get-user";
-import { createDodoCustomer } from "./create-dodo-customer";
 import { eq } from "drizzle-orm";
+import { createDodoCustomer } from "@/actions/create-dodo-customer";
+import { getUser } from "@/actions/get-user";
+import { getPlanByKey } from "@/lib/config/plans";
+import { db } from "@/lib/drizzle/client";
+import { entitlements, users } from "@/lib/drizzle/schema";
+import { buildUserDefaults, resolveUserRole, syncAuthMetadata } from "@/lib/healthfit/server/auth";
+import { createId } from "@/lib/healthfit/ids";
+import { ServerActionRes } from "@/types/server-action";
 
-export async function createUser(): ServerActionRes<string> {
+type CreateUserResult = {
+  userId: string;
+  onboardingCompleted: boolean;
+};
+
+export async function createUser(): ServerActionRes<CreateUserResult> {
   const userRes = await getUser();
 
   if (!userRes.success) {
     return { success: false, error: "User not found" };
   }
 
-  const user = userRes.data;
-
+  const authUser = userRes.data;
+  const now = new Date().toISOString();
+  const role = resolveUserRole(authUser.email!);
+  const plan = getPlanByKey("starter");
   const existingUser = await db.query.users.findFirst({
-    where: eq(users.supabaseUserId, user.id),
+    where: eq(users.supabaseUserId, authUser.id),
   });
 
   if (existingUser) {
-    return { success: true, data: "User already exists" };
+    await db
+      .update(users)
+      .set({
+        email: authUser.email!,
+        fullName: authUser.user_metadata.full_name ?? authUser.user_metadata.name,
+        avatarUrl:
+          authUser.user_metadata.avatar_url ?? authUser.user_metadata.picture,
+        role,
+        updatedAt: now,
+        lastActiveAt: now,
+      })
+      .where(eq(users.supabaseUserId, authUser.id));
+
+    await syncAuthMetadata({
+      userId: authUser.id,
+      existingMetadata: authUser.user_metadata ?? {},
+      role,
+      onboardingCompleted: existingUser.onboardingCompleted,
+    });
+
+    return {
+      success: true,
+      data: {
+        userId: authUser.id,
+        onboardingCompleted: existingUser.onboardingCompleted,
+      },
+    };
   }
 
-  const dodoCustomerRes = await createDodoCustomer({
-    email: user.email!,
-    name: user.user_metadata.name,
-  });
-
-  if (!dodoCustomerRes.success) {
-    return { success: false, error: "Failed to create customer" };
+  let dodoCustomerId: string | null = null;
+  if (process.env.DODO_PAYMENTS_API_KEY) {
+    const dodoCustomerRes = await createDodoCustomer({
+      email: authUser.email!,
+      name: authUser.user_metadata.full_name ?? authUser.user_metadata.name,
+    });
+    if (dodoCustomerRes.success) {
+      dodoCustomerId = dodoCustomerRes.data.customer_id;
+    }
   }
 
   await db.insert(users).values({
-    supabaseUserId: user.id,
-    dodoCustomerId: dodoCustomerRes.data.customer_id,
-    currentSubscriptionId: "",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    supabaseUserId: authUser.id,
+    email: authUser.email!,
+    fullName: authUser.user_metadata.full_name ?? authUser.user_metadata.name,
+    avatarUrl:
+      authUser.user_metadata.avatar_url ?? authUser.user_metadata.picture,
+    dodoCustomerId,
+    lastActiveAt: now,
+    ...buildUserDefaults(),
+    role,
   });
 
-  return { success: true, data: "User created" };
+  await db.insert(entitlements).values({
+    id: createId("ent"),
+    userId: authUser.id,
+    planKey: "starter",
+    source: "system",
+    isActive: true,
+    aiDailyMessageLimit: plan.entitlements.aiDailyMessages,
+    features: plan.entitlements,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  await syncAuthMetadata({
+    userId: authUser.id,
+    existingMetadata: authUser.user_metadata ?? {},
+    role,
+    onboardingCompleted: false,
+  });
+
+  return {
+    success: true,
+    data: {
+      userId: authUser.id,
+      onboardingCompleted: false,
+    },
+  };
 }
