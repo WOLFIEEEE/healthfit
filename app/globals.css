@@ -84,11 +84,8 @@
 
   body {
     @apply bg-background text-foreground font-[var(--font-body)];
-    background-image:
-      radial-gradient(circle at top left, color-mix(in srgb, var(--color-primary) 14%, transparent), transparent 30%),
-      radial-gradient(circle at top right, rgba(223, 240, 226, 0.7), transparent 32%),
-      linear-gradient(180deg, rgba(251, 247, 238, 0.9), rgba(247, 250, 244, 0.98));
     min-height: 100vh;
+    overflow-x: hidden;
   }
 
   h1,
@@ -143,5 +140,66 @@
 
   .section-copy {
     @apply max-w-2xl text-sm leading-7 text-muted-foreground sm:text-base;
+  }
+
+  /* New utility classes for the redesign */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, oklch(0.54 0.11 160), oklch(0.66 0.13 145), oklch(0.54 0.11 160));
+  }
+
+  .img-reveal {
+    clip-path: inset(0 0 0 0);
+  }
+
+  .img-reveal-hidden {
+    clip-path: inset(100% 0 0 0);
+  }
+
+  .parallax-img {
+    will-change: transform;
+  }
+
+  .hover-lift {
+    @apply transition-all duration-500 ease-out;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 40px 100px -40px rgba(46, 114, 78, 0.35);
+  }
+
+  .magnetic-btn {
+    @apply transition-transform duration-300 ease-out;
+  }
+
+  .stagger-fade {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+
+  .line-reveal {
+    overflow: hidden;
+  }
+
+  .line-reveal > * {
+    transform: translateY(100%);
+  }
+
+  .image-mask {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  .noise-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .scroll-indicator {
+    @apply fixed bottom-8 left-1/2 -translate-x-1/2 z-50;
   }
 }

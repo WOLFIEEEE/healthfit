@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import GoogleSignIn from "@/components/auth/google-signin";
+import Image from "next/image";
 import { EmailMagicLinkForm } from "@/components/auth/email-magic-link-form";
 import { BrandMark } from "@/components/healthfit/brand-mark";
 import { getUser } from "@/actions/get-user";
+import { Activity, Dumbbell, HeartPulse, Sparkles } from "lucide-react";
 
 export default async function LoginPage(props: {
   searchParams: Promise<{
@@ -17,58 +18,90 @@ export default async function LoginPage(props: {
   }
 
   return (
-    <main className="page-shell flex min-h-screen items-center py-12">
-      <div className="grid w-full gap-6 lg:grid-cols-[1fr_0.9fr]">
-        <section className="soft-panel relative overflow-hidden px-6 py-8 sm:px-8">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/70 via-transparent to-lime-50/80" />
-          <div className="relative">
-            <BrandMark />
-            <div className="mt-10 max-w-xl">
-              <p className="pill">Member access</p>
-              <h1 className="mt-5 text-5xl font-semibold leading-tight">
-                Sign in to your wellness dashboard.
-              </h1>
-              <p className="mt-4 text-sm leading-7 text-muted-foreground">
-                Continue with Google or request a magic link to access your
-                goals, coach, workouts, meal logs, check-ins, and billing.
-              </p>
-            </div>
-            <div className="mt-10 grid gap-4 sm:grid-cols-2">
+    <main className="flex min-h-screen">
+      {/* Left - Image panel */}
+      <div className="relative hidden w-1/2 overflow-hidden lg:block">
+        <Image
+          src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1000&q=85"
+          alt="Wellness"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-foreground/70 via-foreground/40 to-foreground/70" />
+
+        <div className="relative flex h-full flex-col justify-between p-10">
+          <BrandMark className="[&_div]:text-white [&_div]:text-white/70" />
+
+          <div>
+            <h1 className="max-w-md text-4xl font-semibold leading-tight text-white xl:text-5xl">
+              Your wellness dashboard awaits.
+            </h1>
+            <p className="mt-4 max-w-sm text-sm leading-7 text-white/60">
+              Enter your email and we&apos;ll send you a secure magic link to
+              access your goals, coach, workouts, meal logs, check-ins, and
+              billing.
+            </p>
+
+            <div className="mt-10 grid grid-cols-2 gap-3">
               {[
-                "Adaptive weekly programs",
-                "AI coach with guardrails",
-                "Nutrition and hydration tracking",
-                "Progress and billing in one place",
-              ].map((item) => (
-                <div key={item} className="surface-card px-4 py-4 text-sm text-muted-foreground">
-                  {item}
-                </div>
-              ))}
+                { icon: Dumbbell, label: "Adaptive weekly programs" },
+                { icon: Sparkles, label: "AI coach with guardrails" },
+                { icon: HeartPulse, label: "Nutrition & hydration" },
+                { icon: Activity, label: "Progress & billing" },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={item.label}
+                    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3.5 backdrop-blur-sm"
+                  >
+                    <Icon className="size-4 text-emerald-400" />
+                    <span className="text-xs text-white/80">{item.label}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </section>
-        <section className="soft-panel px-6 py-8 sm:px-8">
-          <p className="pill">Secure sign in</p>
-          <h2 className="mt-5 text-3xl font-semibold">Welcome back</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Pick the sign-in method that fits your routine and return to your
-            green-and-cream member workspace.
+
+          <p className="text-xs text-white/30">
+            Healthfit.ai provides wellness guidance only.
           </p>
-          <div className="mt-8 space-y-5">
-            <GoogleSignIn />
-            <div className="glass-line h-px w-full" />
+        </div>
+      </div>
+
+      {/* Right - Form panel */}
+      <div className="flex w-full items-center justify-center px-6 py-12 lg:w-1/2 lg:px-16">
+        <div className="w-full max-w-md">
+          <div className="lg:hidden">
+            <BrandMark />
+          </div>
+
+          <div className="mt-8 lg:mt-0">
+            <p className="pill">Secure sign in</p>
+            <h2 className="mt-5 text-3xl font-semibold sm:text-4xl">
+              Welcome back
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Sign in with your email to return to your member workspace.
+            </p>
+          </div>
+
+          <div className="mt-10">
             <EmailMagicLinkForm />
+
             {error ? (
-              <div className="rounded-[1.25rem] border border-destructive/20 bg-destructive/8 px-4 py-3 text-sm text-destructive">
+              <div className="mt-4 rounded-2xl border border-destructive/20 bg-destructive/8 px-4 py-3 text-sm text-destructive">
                 {error}
               </div>
             ) : null}
           </div>
-          <p className="mt-8 text-xs leading-6 text-muted-foreground">
+
+          <p className="mt-10 text-xs leading-6 text-muted-foreground">
             Healthfit.ai provides wellness guidance only and does not replace
             medical professionals, diagnosis, or treatment.
           </p>
-        </section>
+        </div>
       </div>
     </main>
   );
