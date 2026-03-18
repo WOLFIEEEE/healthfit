@@ -1,6 +1,7 @@
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import { subDays } from "date-fns";
 import { getPlanByProductId, getPlanByKey } from "@/lib/config/plans";
+import { getConfiguredAdminEmails } from "@/lib/config/admin";
 import {
   assessments,
   checkIns,
@@ -15,14 +16,24 @@ import {
   notifications,
   payments,
   progressMetrics,
-  programDays,
   subscriptions,
   users,
   weeklyPrograms,
   workoutLogs,
 } from "@/lib/drizzle/schema";
 import { db } from "@/lib/drizzle/client";
-import { DashboardSnapshot, PlanKey } from "@/lib/healthfit/contracts";
+import {
+  coachActionsSchema,
+  coachContextSchema,
+  DashboardSnapshot,
+  PlanKey,
+} from "@/lib/healthfit/contracts";
+import {
+  buildCoachContextSnapshot,
+  buildCoachMemorySnapshot,
+} from "@/lib/healthfit/server/coach-intelligence";
+import { resolvePlanAccess } from "@/lib/healthfit/server/access";
+import { ensureProactiveInsights } from "@/lib/healthfit/server/proactive-insights";
 
 function numberOrDefault(value: number | null | undefined, fallback: number) {
   return typeof value === "number" ? value : fallback;
@@ -42,7 +53,6 @@ export async function getDashboardSnapshot(userId: string): Promise<DashboardSna
     habits,
     todayHabitLogs,
     unreadNotifications,
-    latestConversation,
   ] = await Promise.all([
     db.query.users.findFirst({
       where: eq(users.supabaseUserId, userId),
@@ -108,14 +118,21 @@ export async function getDashboardSnapshot(userId: string): Promise<DashboardSna
       orderBy: (table, helpers) => [helpers.desc(table.createdAt)],
       limit: 5,
     }),
-    db.query.coachConversations.findFirst({
-      where: eq(coachConversations.userId, userId),
-      orderBy: (table, helpers) => [helpers.desc(table.lastMessageAt)],
-    }),
   ]);
 
   if (!user) {
     throw new Error("User not found");
+  }
+
+  const hasOnboardingArtifacts = Boolean(
+    profile || activeGoals.length > 0 || recentAssessment || latestProgram
+  );
+
+  let brief = await ensureProactiveInsights(userId);
+
+  if (!brief && (user.onboardingCompleted || hasOnboardingArtifacts)) {
+    const memory = await buildCoachMemorySnapshot(userId);
+    brief = await ensureProactiveInsights(userId, memory);
   }
 
   const activeSubscription = user.currentSubscriptionId
@@ -136,16 +153,14 @@ export async function getDashboardSnapshot(userId: string): Promise<DashboardSna
       orderBy: (table, helpers) => [helpers.desc(table.createdAt)],
     })) ?? null;
 
-  const subscriptionPlan =
-    getPlanByProductId(activeSubscription?.productId ?? null) ?? null;
-  const fallbackPlan = getPlanByKey(user.currentPlanKey);
-  const entitlementPlan = activeEntitlement
-    ? getPlanByKey(activeEntitlement.planKey)
-    : null;
-  const plan =
-    subscriptionPlan ??
-    (fallbackPlan.key !== "starter" ? fallbackPlan : entitlementPlan) ??
-    fallbackPlan;
+  const access = resolvePlanAccess({
+    role: user.role,
+    currentPlanKey: user.currentPlanKey,
+    activeEntitlementPlanKey: activeEntitlement?.planKey ?? null,
+    activeEntitlementAiDailyLimit: activeEntitlement?.aiDailyMessageLimit ?? null,
+    activeSubscriptionProductId: activeSubscription?.productId ?? null,
+  });
+  const plan = access.plan;
 
   const todayNutrition = todayMealLogs.reduce(
     (accumulator, meal) => ({
@@ -263,10 +278,11 @@ export async function getDashboardSnapshot(userId: string): Promise<DashboardSna
       })),
     billing: {
       plan: plan.key,
-      status: activeSubscription?.status ?? "starter",
+      status: activeSubscription?.status ?? (user.role === "admin" ? "admin_access" : "starter"),
       nextBillingDate: activeSubscription?.nextBillingDate ?? null,
       invoicesCount: invoiceCount,
     },
+    brief,
     notifications: unreadNotifications.map((notification) => ({
       id: notification.id,
       title: notification.title,
@@ -278,7 +294,9 @@ export async function getDashboardSnapshot(userId: string): Promise<DashboardSna
 }
 
 export async function getCoachSnapshot(userId: string) {
-  const [conversations, recentMessages] = await Promise.all([
+  const memory = await buildCoachMemorySnapshot(userId);
+  const [brief, conversations, recentMessages] = await Promise.all([
+    ensureProactiveInsights(userId, memory),
     db.query.coachConversations.findMany({
       where: eq(coachConversations.userId, userId),
       orderBy: (table, helpers) => [helpers.desc(table.lastMessageAt)],
@@ -292,8 +310,22 @@ export async function getCoachSnapshot(userId: string) {
   ]);
 
   return {
+    brief,
+    context: buildCoachContextSnapshot(memory),
     conversations,
-    recentMessages: recentMessages.slice().reverse(),
+    recentMessages: recentMessages.slice().reverse().map((message) => {
+      const structuredOutput =
+        typeof message.structuredOutput === "object" &&
+        message.structuredOutput !== null
+          ? (message.structuredOutput as Record<string, unknown>)
+          : {};
+
+      return {
+        ...message,
+        actions: coachActionsSchema.safeParse(structuredOutput.actions).data ?? [],
+        context: coachContextSchema.safeParse(structuredOutput.context).data,
+      };
+    }),
   };
 }
 
@@ -329,31 +361,186 @@ export async function getBillingSnapshot(userId: string) {
 }
 
 export async function getAdminSnapshot() {
-  const [memberCount, activeSubscriptions, flaggedConversations, announcementsList] =
+  const [allUsers, activeEntitlementRows, allFlaggedConversations, recentSubscriptions, announcementsList] =
     await Promise.all([
       db.query.users.findMany({
         orderBy: (table, helpers) => [helpers.desc(table.createdAt)],
-        limit: 12,
+        with: {
+          memberProfile: {
+            columns: {
+              goalSummary: true,
+              lastCheckInAt: true,
+            },
+          },
+          currentSubscription: true,
+        },
       }),
-      db.query.subscriptions.findMany({
+      db.query.entitlements.findMany({
+        where: eq(entitlements.isActive, true),
         orderBy: (table, helpers) => [helpers.desc(table.createdAt)],
-        limit: 12,
       }),
       db.query.coachConversations.findMany({
         where: eq(coachConversations.safetyStatus, "caution"),
         orderBy: (table, helpers) => [helpers.desc(table.updatedAt)],
-        limit: 12,
+        with: {
+          user: {
+            columns: {
+              supabaseUserId: true,
+              email: true,
+              fullName: true,
+              currentPlanKey: true,
+            },
+          },
+        },
+      }),
+      db.query.subscriptions.findMany({
+        orderBy: (table, helpers) => [helpers.desc(table.createdAt)],
+        limit: 24,
       }),
       db.query.notifications.findMany({
         orderBy: (table, helpers) => [helpers.desc(table.createdAt)],
-        limit: 12,
+        limit: 24,
+        with: {
+          user: {
+            columns: {
+              supabaseUserId: true,
+              email: true,
+              fullName: true,
+            },
+          },
+        },
       }),
     ]);
 
+  const members = allUsers.filter((user) => user.role === "member");
+  const activeEntitlementsByUser = new Map<string, (typeof activeEntitlementRows)[number]>();
+
+  activeEntitlementRows.forEach((entitlement) => {
+    if (!activeEntitlementsByUser.has(entitlement.userId)) {
+      activeEntitlementsByUser.set(entitlement.userId, entitlement);
+    }
+  });
+
+  const cautionConversationCountByUser = new Map<string, number>();
+
+  allFlaggedConversations.forEach((conversation) => {
+    cautionConversationCountByUser.set(
+      conversation.userId,
+      (cautionConversationCountByUser.get(conversation.userId) ?? 0) + 1
+    );
+  });
+
+  const memberRows = members
+    .map((user) => {
+      const activeEntitlement = activeEntitlementsByUser.get(user.supabaseUserId) ?? null;
+      const assignedPlan = getPlanByKey(user.currentPlanKey);
+      const access = resolvePlanAccess({
+        role: user.role,
+        currentPlanKey: user.currentPlanKey,
+        activeEntitlementPlanKey: activeEntitlement?.planKey ?? null,
+        activeEntitlementAiDailyLimit: activeEntitlement?.aiDailyMessageLimit ?? null,
+        activeSubscriptionProductId: user.currentSubscription?.productId ?? null,
+      });
+      const effectivePlan = access.plan;
+      const planSource =
+        access.planSource === "entitlement"
+          ? (activeEntitlement?.source ?? "entitlement")
+          : access.planSource;
+
+      const cautionConversationCount =
+        cautionConversationCountByUser.get(user.supabaseUserId) ?? 0;
+      const needsAttention =
+        !user.onboardingCompleted ||
+        cautionConversationCount > 0 ||
+        Boolean(user.currentSubscription?.cancelAtNextBillingDate);
+
+      return {
+        supabaseUserId: user.supabaseUserId,
+        fullName: user.fullName ?? user.email.split("@")[0],
+        email: user.email,
+        role: user.role,
+        assignedPlan: assignedPlan.name,
+        assignedPlanKey: assignedPlan.key,
+        effectivePlan: effectivePlan.name,
+        effectivePlanKey: effectivePlan.key,
+        planSource,
+        planMismatch: assignedPlan.key !== effectivePlan.key,
+        billingStatus: user.currentSubscription?.status ?? "starter",
+        nextBillingDate: user.currentSubscription?.nextBillingDate ?? null,
+        cancelAtNextBillingDate:
+          user.currentSubscription?.cancelAtNextBillingDate ?? false,
+        onboardingCompleted: user.onboardingCompleted,
+        lastActiveAt: user.lastActiveAt,
+        lastCheckInAt: user.memberProfile?.lastCheckInAt ?? null,
+        aiDailyLimit:
+          access.aiDailyLimit,
+        activeGoalSummary: user.memberProfile?.goalSummary ?? null,
+        cautionConversationCount,
+        needsAttention,
+      };
+    })
+    .sort((left, right) => {
+      if (left.needsAttention !== right.needsAttention) {
+        return left.needsAttention ? -1 : 1;
+      }
+
+      const leftLastActive = left.lastActiveAt ? new Date(left.lastActiveAt).getTime() : 0;
+      const rightLastActive = right.lastActiveAt ? new Date(right.lastActiveAt).getTime() : 0;
+
+      return rightLastActive - leftLastActive;
+    });
+
+  const planExceptions = memberRows
+    .filter(
+      (member) =>
+        member.planMismatch ||
+        member.cancelAtNextBillingDate ||
+        member.cautionConversationCount > 0
+    )
+    .slice(0, 8);
+
   return {
-    members: memberCount,
-    subscriptions: activeSubscriptions,
-    flaggedConversations,
-    operationalFeed: announcementsList,
+    summary: {
+      totalMembers: members.length,
+      onboardedMembers: memberRows.filter((member) => member.onboardingCompleted).length,
+      paidMembers: memberRows.filter((member) => member.effectivePlanKey !== "starter")
+        .length,
+      cautionConversations: allFlaggedConversations.length,
+      pendingCancellations: memberRows.filter((member) => member.cancelAtNextBillingDate)
+        .length,
+    },
+    adminPolicy: {
+      adminCount: allUsers.filter((user) => user.role === "admin").length,
+      configuredEmails: getConfiguredAdminEmails(),
+    },
+    members: memberRows.slice(0, 24),
+    subscriptions: recentSubscriptions.map((subscription) => ({
+      ...subscription,
+      plan:
+        getPlanByProductId(subscription.productId)?.name ??
+        subscription.productId,
+    })),
+    flaggedConversations: allFlaggedConversations.slice(0, 12).map((conversation) => ({
+      id: conversation.id,
+      title: conversation.title,
+      safetyStatus: conversation.safetyStatus,
+      updatedAt: conversation.updatedAt,
+      memberName:
+        conversation.user?.fullName ??
+        conversation.user?.email ??
+        conversation.userId,
+      memberEmail: conversation.user?.email ?? null,
+    })),
+    planExceptions,
+    operationalFeed: announcementsList.map((item) => ({
+      id: item.id,
+      type: item.type,
+      title: item.title,
+      body: item.body,
+      createdAt: item.createdAt,
+      status: item.status,
+      memberName: item.user?.fullName ?? item.user?.email ?? "System",
+      memberEmail: item.user?.email ?? null,
+    })),
   };
 }

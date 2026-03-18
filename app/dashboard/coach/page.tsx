@@ -25,11 +25,14 @@ export default async function CoachPage() {
           role: message.role,
           content: message.content,
           createdAt: message.createdAt,
+          actions: message.actions,
         }))}
         promptSuggestions={premium.coachPrompts}
         aiUsage={premium.membership.aiUsage}
         supportLane={premium.membership.supportLane}
         upgradePrompt={premium.membership.upgradePrompt}
+        coachContext={snapshot.context}
+        brief={snapshot.brief}
       />
     </div>
   );

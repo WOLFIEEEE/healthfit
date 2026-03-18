@@ -66,6 +66,7 @@ export type UsageMeter = {
   percentage: number;
   status: "locked" | "available" | "near_limit";
   helper: string;
+  unlimited?: boolean;
 };
 
 export type MembershipIntelligence = {
@@ -78,6 +79,85 @@ export type MembershipIntelligence = {
   unlockedFeatures: string[];
   lockedFeatures: string[];
   upgradePrompt: string | null;
+};
+
+export type CoachAction =
+  | {
+      id: string;
+      type: "navigate";
+      label: string;
+      description: string;
+      href: string;
+    }
+  | {
+      id: string;
+      type: "log_workout";
+      label: string;
+      description: string;
+      payload: {
+        workoutName: string;
+        durationMin: number;
+        effortScore?: number;
+        notes?: string;
+      };
+    }
+  | {
+      id: string;
+      type: "log_meal";
+      label: string;
+      description: string;
+      payload: {
+        mealType: "breakfast" | "lunch" | "dinner" | "snack";
+        title: string;
+        calories: number;
+        proteinGrams: number;
+        carbsGrams: number;
+        fatGrams: number;
+        waterMl: number;
+        notes?: string;
+      };
+    }
+  | {
+      id: string;
+      type: "log_habit";
+      label: string;
+      description: string;
+      payload: {
+        habitSlug: string;
+        status: "done" | "skipped";
+        note?: string;
+      };
+    }
+  | {
+      id: string;
+      type: "replan_week";
+      label: string;
+      description: string;
+      payload?: {
+        mode?: string;
+      };
+    };
+
+export type CoachContextSnapshot = {
+  summary: string;
+  currentFocus: string;
+  momentum: "rising" | "steady" | "needs_attention";
+  recoveryStatus: "strong" | "watch" | "recover";
+  recentWins: string[];
+  watchouts: string[];
+  nextShift: string;
+  badges: Array<{
+    label: string;
+    value: string;
+    tone: "positive" | "neutral" | "attention";
+  }>;
+};
+
+export type ProactiveBrief = {
+  title: string;
+  summary: string;
+  nextActions: string[];
+  generatedAt: string;
 };
 
 export type PremiumExperienceSnapshot = {
@@ -149,6 +229,7 @@ export type DashboardSnapshot = {
     nextBillingDate: string | null;
     invoicesCount: number;
   };
+  brief: ProactiveBrief | null;
   notifications: Array<{
     id: string;
     title: string;
@@ -238,6 +319,92 @@ export const coachMessageSchema = z.object({
 
 export type CoachMessageInput = z.infer<typeof coachMessageSchema>;
 
+export const coachActionSchema = z.discriminatedUnion("type", [
+  z.object({
+    id: z.string(),
+    type: z.literal("navigate"),
+    label: z.string(),
+    description: z.string(),
+    href: z.string(),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("log_workout"),
+    label: z.string(),
+    description: z.string(),
+    payload: z.object({
+      workoutName: z.string(),
+      durationMin: z.number(),
+      effortScore: z.number().optional(),
+      notes: z.string().optional(),
+    }),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("log_meal"),
+    label: z.string(),
+    description: z.string(),
+    payload: z.object({
+      mealType: z.enum(["breakfast", "lunch", "dinner", "snack"]),
+      title: z.string(),
+      calories: z.number(),
+      proteinGrams: z.number(),
+      carbsGrams: z.number(),
+      fatGrams: z.number(),
+      waterMl: z.number(),
+      notes: z.string().optional(),
+    }),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("log_habit"),
+    label: z.string(),
+    description: z.string(),
+    payload: z.object({
+      habitSlug: z.string(),
+      status: z.enum(["done", "skipped"]),
+      note: z.string().optional(),
+    }),
+  }),
+  z.object({
+    id: z.string(),
+    type: z.literal("replan_week"),
+    label: z.string(),
+    description: z.string(),
+    payload: z
+      .object({
+        mode: z.string().optional(),
+      })
+      .optional(),
+  }),
+]);
+
+export const coachActionsSchema = z.array(coachActionSchema);
+
+export const coachContextSchema = z.object({
+  summary: z.string(),
+  currentFocus: z.string(),
+  momentum: z.enum(["rising", "steady", "needs_attention"]),
+  recoveryStatus: z.enum(["strong", "watch", "recover"]),
+  recentWins: z.array(z.string()),
+  watchouts: z.array(z.string()),
+  nextShift: z.string(),
+  badges: z.array(
+    z.object({
+      label: z.string(),
+      value: z.string(),
+      tone: z.enum(["positive", "neutral", "attention"]),
+    })
+  ),
+});
+
+export const proactiveBriefSchema = z.object({
+  title: z.string(),
+  summary: z.string(),
+  nextActions: z.array(z.string()),
+  generatedAt: z.string(),
+});
+
 export type CoachReply = {
   conversationId: string;
   message: string;
@@ -249,6 +416,8 @@ export type CoachReply = {
     focus: string[];
     nextActions: string[];
     disclaimer: string;
+    actions: CoachAction[];
+    context?: CoachContextSnapshot;
   };
 };
 

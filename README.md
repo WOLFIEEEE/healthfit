@@ -4,6 +4,7 @@ Healthfit.ai is a consumer wellness SaaS focused on workouts, nutrition, habits,
 
 - a health-focused marketing site and legal pages
 - Google OAuth and email magic-link sign-in
+- branded Resend email delivery for magic links and onboarding welcome emails when Resend env vars are configured
 - protected onboarding with goal, schedule, nutrition, and wellness-consent capture
 - a multi-section member dashboard for overview, coach, workouts, nutrition, habits, check-ins, progress, billing, and settings
 - a lightweight admin console
@@ -18,14 +19,15 @@ Healthfit.ai is a consumer wellness SaaS focused on workouts, nutrition, habits,
 1. Copy `.env.example` to `.env.local`.
 2. Fill in the required Supabase and Dodo values.
 3. Optionally add `OPENAI_API_KEY` and `HEALTHFIT_AI_MODEL` for live AI responses.
-4. Install dependencies:
+4. Optionally add `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `RESEND_REPLY_TO_EMAIL` for branded email delivery.
+5. Install dependencies:
 
 ```bash
 npm install
 ```
 
-5. Apply the Supabase SQL migration in [`supabase/migrations/202603170001_healthfit_foundation.sql`](./supabase/migrations/202603170001_healthfit_foundation.sql).
-6. Run the app:
+6. Apply the Supabase SQL migration in [`supabase/migrations/202603170001_healthfit_foundation.sql`](./supabase/migrations/202603170001_healthfit_foundation.sql).
+7. Run the app:
 
 ```bash
 npm run dev

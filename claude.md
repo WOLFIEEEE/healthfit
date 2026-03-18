@@ -121,7 +121,8 @@ This is used for:
 | `SANITY_REVALIDATE_SECRET` | Secret for Sanity webhook revalidation |
 | `OPENAI_API_KEY` | For AI coach |
 | `HEALTHFIT_AI_MODEL` | OpenAI model (e.g. `gpt-4o`) |
-| `HEALTHFIT_ADMIN_EMAILS` | Comma-separated admin emails |
+| `ADMIN_EMAIL` | Preferred admin email config. Supports one or many comma-separated emails |
+| `HEALTHFIT_ADMIN_EMAILS` | Legacy fallback for comma-separated admin emails |
 
 ---
 

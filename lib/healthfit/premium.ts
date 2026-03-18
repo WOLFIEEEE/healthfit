@@ -28,6 +28,7 @@ type MembershipIntelligenceInput = {
   aiDailyLimit: number;
   activeGoals: number;
   maxActiveGoals: number;
+  unlimitedAccess?: boolean;
 };
 
 function clampPercent(value: number) {
@@ -40,9 +41,25 @@ function buildUsageMeter(args: {
   limit: number;
   activeHelper: string;
   lockedHelper: string;
+  unlimited?: boolean;
+  unlimitedHelper?: string;
 }) {
   const used = Math.max(0, args.used);
   const limit = Math.max(0, args.limit);
+
+  if (args.unlimited) {
+    return {
+      label: args.label,
+      used,
+      limit,
+      remaining: Math.max(limit - used, 0),
+      percentage: 100,
+      status: "available",
+      helper: args.unlimitedHelper ?? "Unlimited internal access.",
+      unlimited: true,
+    } as const;
+  }
+
   const remaining = limit > 0 ? Math.max(limit - used, 0) : 0;
   const percentage = limit > 0 ? clampPercent((used / limit) * 100) : 0;
   const status =
@@ -239,6 +256,8 @@ export function buildMembershipIntelligence(
     limit: input.aiDailyLimit,
     activeHelper: "messages remaining today",
     lockedHelper: "Upgrade to Pro or Elite to unlock coaching messages.",
+    unlimited: input.unlimitedAccess,
+    unlimitedHelper: "Unlimited AI access for internal admin accounts.",
   });
 
   const goalUsage = buildUsageMeter({
@@ -247,6 +266,8 @@ export function buildMembershipIntelligence(
     limit: input.maxActiveGoals,
     activeHelper: "goal slots left on your plan",
     lockedHelper: "No active goal slots are available on this plan.",
+    unlimited: input.unlimitedAccess,
+    unlimitedHelper: "Unlimited active-goal capacity for internal admin accounts.",
   });
 
   const features = featureLabelMap(input.plan);
@@ -256,6 +277,21 @@ export function buildMembershipIntelligence(
   const lockedFeatures = features
     .filter((feature) => !feature.enabled)
     .map((feature) => feature.label);
+
+  if (input.unlimitedAccess) {
+    return {
+      planName: input.plan.name,
+      planKey: input.plan.key,
+      valueHeadline:
+        "Admin access keeps every member feature unlocked without billing or daily usage caps.",
+      supportLane: "priority",
+      aiUsage,
+      goalUsage,
+      unlockedFeatures: features.map((feature) => feature.label),
+      lockedFeatures: [],
+      upgradePrompt: null,
+    };
+  }
 
   let upgradePrompt: string | null = null;
   if (aiUsage.status === "locked") {

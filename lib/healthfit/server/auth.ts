@@ -1,18 +1,14 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/drizzle/client";
+import { isAdminEmail } from "@/lib/config/admin";
 import { SelectUser, users } from "@/lib/drizzle/schema";
 import { getAdminAuthClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { defaultPlanKey } from "@/lib/config/plans";
 
 export function resolveUserRole(email: string) {
-  const adminEmails = (process.env.HEALTHFIT_ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((value) => value.trim().toLowerCase())
-    .filter(Boolean);
-
-  return adminEmails.includes(email.toLowerCase()) ? "admin" : "member";
+  return isAdminEmail(email) ? "admin" : "member";
 }
 
 export async function syncAuthMetadata(props: {

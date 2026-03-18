@@ -11,27 +11,35 @@ export default async function BillingPage() {
     getBillingSnapshot(user.supabaseUserId),
     getPremiumExperienceSnapshot(user.supabaseUserId),
   ]);
-  const currentPlan =
+  const subscriptionPlan =
     getPlanByProductId(billing.subscription?.productId ?? null) ??
     getPlanByKey(user.currentPlanKey);
+  const currentPlanName =
+    user.role === "admin" ? premium.membership.planName : subscriptionPlan.name;
+  const currentPlanKey =
+    user.role === "admin" ? premium.membership.planKey : subscriptionPlan.key;
 
   return (
     <div className="space-y-6">
       <section className="soft-panel grid gap-4 px-6 py-6 md:grid-cols-3">
         <div className="rounded-[1.5rem] bg-white/75 px-4 py-4">
           <p className="text-sm text-muted-foreground">Current plan</p>
-          <p className="mt-2 text-2xl font-semibold">{currentPlan.name}</p>
+          <p className="mt-2 text-2xl font-semibold">{currentPlanName}</p>
         </div>
         <div className="rounded-[1.5rem] bg-white/75 px-4 py-4">
           <p className="text-sm text-muted-foreground">Subscription status</p>
           <p className="mt-2 text-2xl font-semibold capitalize">
-            {billing.subscription?.status ?? "starter"}
+            {user.role === "admin"
+              ? "admin override"
+              : billing.subscription?.status ?? "starter"}
           </p>
         </div>
         <div className="rounded-[1.5rem] bg-white/75 px-4 py-4">
           <p className="text-sm text-muted-foreground">Next billing date</p>
           <p className="mt-2 text-2xl font-semibold">
-            {billing.subscription?.nextBillingDate
+            {user.role === "admin"
+              ? "Not required"
+              : billing.subscription?.nextBillingDate
               ? new Date(billing.subscription.nextBillingDate).toLocaleDateString()
               : "Free plan"}
           </p>
@@ -41,18 +49,19 @@ export default async function BillingPage() {
       <MembershipIntelligenceCard membership={premium.membership} />
 
       <section className="soft-panel px-6 py-6">
-        <h2 className="text-3xl font-semibold">Plan options</h2>
+        <h2 className="text-2xl font-semibold sm:text-3xl">Plan options</h2>
         <p className="mt-2 max-w-2xl text-sm leading-7 text-muted-foreground">
           Dodo powers the subscription lifecycle, while Healthfit.ai controls
           entitlements and product access.
         </p>
         <div className="mt-6">
           <BillingPlanGrid
-            currentPlanKey={currentPlan.key}
+            currentPlanKey={currentPlanKey}
             currentSubscriptionId={billing.subscription?.subscriptionId}
             currentCancelAtNextBillingDate={
               billing.subscription?.cancelAtNextBillingDate
             }
+            isAdmin={user.role === "admin"}
             user={{
               email: billing.user.email,
               fullName:
@@ -65,7 +74,8 @@ export default async function BillingPage() {
       <section className="soft-panel px-6 py-6">
         <h2 className="text-2xl font-semibold">Invoice history</h2>
         <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-border/70">
-          <table className="min-w-full divide-y divide-border/70 text-sm">
+          <div className="overflow-x-auto">
+            <table className="min-w-[36rem] w-full divide-y divide-border/70 text-sm">
             <thead className="bg-secondary/70 text-left text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Date</th>
@@ -100,7 +110,8 @@ export default async function BillingPage() {
                 ))
               )}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
       </section>
     </div>

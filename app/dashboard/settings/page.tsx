@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { getPlanByKey } from "@/lib/config/plans";
+import { getAdminAccessPlan } from "@/lib/healthfit/server/access";
 import { requireCurrentAppUser } from "@/lib/healthfit/server/auth";
 
 export default async function SettingsPage() {
   const user = await requireCurrentAppUser();
-  const plan = getPlanByKey(user.currentPlanKey);
+  const plan =
+    user.role === "admin" ? getAdminAccessPlan() : getPlanByKey(user.currentPlanKey);
 
   return (
     <div className="space-y-6">
@@ -24,7 +26,7 @@ export default async function SettingsPage() {
             {user.onboardingCompleted ? "Onboarding complete" : "Onboarding pending"}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Consent accepted: {user.wellnessConsentAccepted ? "yes" : "no"}
+            Consent accepted: {user.role === "admin" ? "internal override" : user.wellnessConsentAccepted ? "yes" : "no"}
           </p>
         </div>
         <div className="surface-card px-4 py-4">
@@ -33,7 +35,7 @@ export default async function SettingsPage() {
             {plan.entitlements.prioritySupport ? "Priority support" : "Standard support"}
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            AI coach: {plan.entitlements.aiCoach ? "enabled" : "not included"}
+            AI coach: {user.role === "admin" ? "unlimited" : plan.entitlements.aiCoach ? "enabled" : "not included"}
           </p>
         </div>
       </section>

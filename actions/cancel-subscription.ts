@@ -3,6 +3,7 @@
 import { getDodoClient } from "@/lib/dodo-payments/client";
 import { db } from "@/lib/drizzle/client";
 import { subscriptions } from "@/lib/drizzle/schema";
+import { requireOwnedSubscription } from "@/lib/healthfit/server/billing";
 import { ServerActionRes } from "@/types/server-action";
 import { eq } from "drizzle-orm";
 
@@ -10,7 +11,9 @@ export async function cancelSubscription(props: {
   subscriptionId: string;
 }): ServerActionRes {
   try {
-    await getDodoClient().subscriptions.update(props.subscriptionId, {
+    const { subscription } = await requireOwnedSubscription(props.subscriptionId);
+
+    await getDodoClient().subscriptions.update(subscription.subscriptionId, {
       cancel_at_next_billing_date: true,
     });
 
@@ -19,7 +22,7 @@ export async function cancelSubscription(props: {
       .set({
         cancelAtNextBillingDate: true,
       })
-      .where(eq(subscriptions.subscriptionId, props.subscriptionId));
+      .where(eq(subscriptions.subscriptionId, subscription.subscriptionId));
 
     return {
       success: true,

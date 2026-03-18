@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getPlanByKey } from "@/lib/config/plans";
+import { AIBriefCard } from "@/components/dashboard/ai-brief-card";
 import { MembershipIntelligenceCard } from "@/components/dashboard/membership-intelligence-card";
 import { getDashboardSnapshot } from "@/lib/healthfit/server/dashboard";
 import { requireCurrentAppUser } from "@/lib/healthfit/server/auth";
@@ -13,7 +13,7 @@ export default async function OverviewPage() {
     getDashboardSnapshot(user.supabaseUserId),
     getPremiumExperienceSnapshot(user.supabaseUserId),
   ]);
-  const plan = getPlanByKey(snapshot.billing.plan);
+  const isAdmin = snapshot.user.role === "admin";
 
   return (
     <div className="space-y-6">
@@ -74,10 +74,12 @@ export default async function OverviewPage() {
         <MembershipIntelligenceCard membership={premium.membership} />
       </section>
 
+      <AIBriefCard brief={snapshot.brief} />
+
       <section className="grid gap-6 lg:grid-cols-3">
         <div className="soft-panel px-5 py-5">
           <p className="text-sm text-muted-foreground">Workspace status</p>
-          <h2 className="mt-2 text-2xl font-semibold">{plan.name}</h2>
+          <h2 className="mt-2 text-2xl font-semibold">{premium.membership.planName}</h2>
           <div className="mt-4 space-y-3 text-sm text-muted-foreground">
             <div className="surface-card px-4 py-4">
               Billing status: {snapshot.billing.status}
@@ -98,13 +100,13 @@ export default async function OverviewPage() {
           <h2 className="mt-2 text-2xl font-semibold">What&apos;s unlocked right now</h2>
           <div className="mt-4 grid gap-3 text-sm text-muted-foreground">
             <div className="surface-card px-4 py-4">
-              AI coach: {plan.entitlements.aiCoach ? "enabled" : "upgrade required"}
+              AI coach: {premium.membership.aiUsage.unlimited ? "unlimited" : premium.membership.aiUsage.limit > 0 ? "enabled" : "upgrade required"}
             </div>
             <div className="surface-card px-4 py-4">
-              Active goal limit: {plan.entitlements.maxActiveGoals}
+              Active goal limit: {premium.membership.goalUsage.unlimited ? "Unlimited" : premium.membership.goalUsage.limit}
             </div>
             <div className="surface-card px-4 py-4">
-              Support lane: {plan.entitlements.prioritySupport ? "priority" : "standard"}
+              Support lane: {premium.membership.supportLane}
             </div>
           </div>
         </div>
@@ -117,6 +119,7 @@ export default async function OverviewPage() {
               { label: "Log workout", href: "/dashboard/workouts" },
               { label: "Update nutrition", href: "/dashboard/nutrition" },
               { label: "Manage billing", href: "/dashboard/billing" },
+              ...(isAdmin ? [{ label: "Open admin", href: "/admin" }] : []),
             ].map((item) => (
               <Link
                 key={item.href}

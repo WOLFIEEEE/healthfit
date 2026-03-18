@@ -45,7 +45,7 @@ export default async function InsightsPage() {
             <div className="relative grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
               <div>
                 <p className="pill">{settings?.contentHubEyebrow ?? "Sanity content hub"}</p>
-                <h1 className="mt-5 max-w-4xl text-5xl font-semibold leading-[1.02] sm:text-6xl">
+                <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-[1.02] sm:text-5xl lg:text-6xl">
                   {showcaseTitle}
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">

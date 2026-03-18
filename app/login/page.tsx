@@ -1,24 +1,27 @@
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import { EmailMagicLinkForm } from "@/components/auth/email-magic-link-form";
+import { AuthMethods } from "@/components/auth/auth-methods";
 import { BrandMark } from "@/components/healthfit/brand-mark";
 import { getUser } from "@/actions/get-user";
+import { resolveSafeNextPath } from "@/lib/auth/magic-links";
 import { Activity, Dumbbell, HeartPulse, Sparkles } from "lucide-react";
 
 export default async function LoginPage(props: {
   searchParams: Promise<{
     error?: string;
+    next?: string;
   }>;
 }) {
   const userRes = await getUser();
-  const { error } = await props.searchParams;
+  const { error, next } = await props.searchParams;
+  const nextPath = resolveSafeNextPath(next ?? null);
 
   if (userRes.success && userRes.data) {
-    redirect("/dashboard/overview");
+    redirect(nextPath ?? "/dashboard/overview");
   }
 
   return (
-    <main className="flex min-h-screen">
+    <main className="flex min-h-screen flex-col lg:flex-row">
       {/* Left - Image panel */}
       <div className="relative hidden w-1/2 overflow-hidden lg:block">
         <Image
@@ -38,9 +41,8 @@ export default async function LoginPage(props: {
               Your wellness dashboard awaits.
             </h1>
             <p className="mt-4 max-w-sm text-sm leading-7 text-white/60">
-              Enter your email and we&apos;ll send you a secure magic link to
-              access your goals, coach, workouts, meal logs, check-ins, and
-              billing.
+              Sign in with a password or a secure email link to access your
+              goals, coach, workouts, meal logs, check-ins, and billing.
             </p>
 
             <div className="mt-10 grid grid-cols-2 gap-3">
@@ -71,7 +73,7 @@ export default async function LoginPage(props: {
       </div>
 
       {/* Right - Form panel */}
-      <div className="flex w-full items-center justify-center px-6 py-12 lg:w-1/2 lg:px-16">
+      <div className="flex w-full items-center justify-center px-4 py-10 sm:px-6 sm:py-12 lg:w-1/2 lg:px-16">
         <div className="w-full max-w-md">
           <div className="lg:hidden">
             <BrandMark />
@@ -83,12 +85,12 @@ export default async function LoginPage(props: {
               Welcome back
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Sign in with your email to return to your member workspace.
+              Use your password or a magic link to get back into your member workspace.
             </p>
           </div>
 
           <div className="mt-10">
-            <EmailMagicLinkForm />
+            <AuthMethods nextPath={nextPath} />
 
             {error ? (
               <div className="mt-4 rounded-2xl border border-destructive/20 bg-destructive/8 px-4 py-3 text-sm text-destructive">

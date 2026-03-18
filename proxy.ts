@@ -24,18 +24,20 @@ export async function proxy(request: NextRequest) {
 
   const onboardingCompleted = Boolean(user.user_metadata?.onboardingCompleted);
   const role = user.app_metadata?.role ?? "member";
+  const isAdmin = role === "admin";
 
   if (
     pathname.startsWith("/dashboard") &&
     !pathname.startsWith("/dashboard/billing") &&
-    !onboardingCompleted
+    !onboardingCompleted &&
+    !isAdmin
   ) {
     const onboardingUrl = request.nextUrl.clone();
     onboardingUrl.pathname = "/onboarding";
     return NextResponse.redirect(onboardingUrl);
   }
 
-  if (pathname.startsWith("/onboarding") && onboardingCompleted) {
+  if (pathname.startsWith("/onboarding") && (onboardingCompleted || isAdmin)) {
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = "/dashboard/overview";
     return NextResponse.redirect(dashboardUrl);
@@ -49,7 +51,7 @@ export async function proxy(request: NextRequest) {
 
   if (pathname === "/login") {
     const dashboardUrl = request.nextUrl.clone();
-    dashboardUrl.pathname = onboardingCompleted
+    dashboardUrl.pathname = onboardingCompleted || isAdmin
       ? "/dashboard/overview"
       : "/onboarding";
     return NextResponse.redirect(dashboardUrl);

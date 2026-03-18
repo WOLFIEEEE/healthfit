@@ -8,7 +8,13 @@ test.describe("public product flows", () => {
 
     await expect(
       page.getByRole("heading", {
-        name: /Health routines that feel grounded, guided, and actually repeatable\./i,
+        name: /^Health routines$/i,
+      })
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole("heading", {
+        name: /^that feel grounded\.$/i,
       })
     ).toBeVisible();
 
@@ -82,9 +88,23 @@ test.describe("public product flows", () => {
       })
     ).toBeVisible();
 
+    await expect(page.getByRole("tab", { name: "Password" })).toBeVisible();
+    await expect(page.getByRole("tab", { name: "Magic link" })).toBeVisible();
+    await expect(
+      page.getByRole("tab", { name: "Sign in" })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("tab", { name: "Create account" })
+    ).toBeVisible();
+    await expect(page.getByTestId("password-sign-in-email")).toBeVisible();
+    await expect(page.getByTestId("password-sign-in-password")).toBeVisible();
+    await expect(
+      page.getByTestId("password-sign-in-submit")
+    ).toBeVisible();
+    await page.getByRole("tab", { name: "Magic link" }).click();
     await expect(page.getByLabel(/Email address/i)).toBeVisible();
     await expect(
-      page.getByRole("button", { name: /Continue with Google/i })
+      page.getByRole("button", { name: /Send magic link/i })
     ).toBeVisible();
   });
 });

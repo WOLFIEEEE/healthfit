@@ -80,7 +80,7 @@ export default function ResourcesPage() {
             <div className="relative grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
               <div>
                 <p className="pill">Public health resource hub</p>
-                <h1 className="mt-5 max-w-4xl text-5xl font-semibold leading-[1.02] sm:text-6xl">
+                <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-[1.02] sm:text-5xl lg:text-6xl">
                   Clean, research-backed wellness pages built from official guidance.
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
@@ -89,7 +89,7 @@ export default function ResourcesPage() {
                   education grounded in the source material linked on every page.
                 </p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+              <div className="grid gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-1">
                 {[
                   {
                     icon: Library,

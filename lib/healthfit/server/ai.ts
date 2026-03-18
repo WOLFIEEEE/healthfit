@@ -16,6 +16,7 @@ export async function generateCoachReply(props: {
   activityLevel: string;
   experienceLevel: string;
   conversationId: string;
+  memoryContext?: string;
 }): Promise<CoachReply> {
   const flags = detectSafetyFlags(props.message);
 
@@ -27,7 +28,10 @@ export async function generateCoachReply(props: {
       safetyStatus: "caution",
       flags,
       fallbackUsed: true,
-      structured: safetyReply.structured,
+      structured: {
+        ...safetyReply.structured,
+        actions: [],
+      },
     };
   }
 
@@ -42,7 +46,10 @@ export async function generateCoachReply(props: {
       safetyStatus: "clear",
       flags: [],
       fallbackUsed: true,
-      structured: fallback,
+      structured: {
+        ...fallback,
+        actions: [],
+      },
     };
   }
 
@@ -65,7 +72,7 @@ export async function generateCoachReply(props: {
           },
           {
             role: "user",
-            content: `Member goal: ${props.goalSummary}\nActivity level: ${props.activityLevel}\nExperience level: ${props.experienceLevel}\nUser message: ${props.message}`,
+            content: `Member goal: ${props.goalSummary}\nActivity level: ${props.activityLevel}\nExperience level: ${props.experienceLevel}\nMember memory:\n${props.memoryContext ?? "No additional context"}\nUser message: ${props.message}`,
           },
         ],
       }),
@@ -96,6 +103,7 @@ export async function generateCoachReply(props: {
           ? parsed.nextActions
           : fallback.nextActions,
         disclaimer: parsed.disclaimer ?? fallback.disclaimer,
+        actions: [],
       },
     };
   } catch (error) {
@@ -107,7 +115,10 @@ export async function generateCoachReply(props: {
       safetyStatus: "clear",
       flags: [],
       fallbackUsed: true,
-      structured: fallback,
+      structured: {
+        ...fallback,
+        actions: [],
+      },
     };
   }
 }

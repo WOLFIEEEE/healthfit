@@ -1,154 +1,159 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { marketingNav } from "@/lib/config/navigation";
-import { BrandMark } from "@/components/healthfit/brand-mark";
-import { MagneticButton } from "@/components/animations/magnetic-button";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import { BrandMark } from "@/components/healthfit/brand-mark";
+import { marketingNav } from "@/lib/config/navigation";
+import { cn } from "@/lib/utils";
 
-gsap.registerPlugin(ScrollTrigger);
+const primaryNav = marketingNav.filter((item) =>
+  ["Product", "Programs", "Pricing", "Insights", "Resources"].includes(item.label)
+);
+
+function isActivePage(pathname: string, href: string) {
+  if (href.startsWith("/#")) {
+    return false;
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export function SiteHeader() {
-  const headerRef = useRef<HTMLElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const isHome = pathname === "/";
+  const elevated = !isHome || scrolled;
 
   useEffect(() => {
-    const header = headerRef.current;
-    const inner = innerRef.current;
-    if (!header || !inner) return;
+    const onScroll = () => {
+      setScrolled(window.scrollY > 24);
+    };
 
-    // Entrance — fade in from top
-    gsap.fromTo(
-      inner,
-      { y: -30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, delay: 0.3, ease: "power3.out" }
-    );
-
-    // On scroll: switch from transparent to solid
-    ScrollTrigger.create({
-      start: "top -100",
-      onEnter: () => setScrolled(true),
-      onLeaveBack: () => setScrolled(false),
-    });
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => {
-      ScrollTrigger.getAll().forEach((t) => t.kill());
+      window.removeEventListener("scroll", onScroll);
     };
   }, []);
 
   return (
-    <header
-      ref={headerRef}
-      className="fixed left-0 right-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-8"
-    >
-      <div
-        ref={innerRef}
-        className={`mx-auto flex max-w-7xl items-center justify-between gap-4 rounded-[1.75rem] px-5 py-3.5 transition-all duration-500 ${
-          scrolled
-            ? "border border-border/40 bg-white/85 shadow-[0_8px_40px_-12px_rgba(46,114,78,0.12)] backdrop-blur-xl"
-            : "border border-transparent bg-transparent"
-        }`}
-      >
-        {/* Logo — adapt color to scroll state */}
-        <div className="flex items-center gap-4">
-          <div
-            className={`transition-opacity duration-500 ${
-              scrolled ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-          >
-            <BrandMark compact />
-          </div>
-          <div
-            className={`absolute transition-opacity duration-500 ${
-              scrolled ? "opacity-0 pointer-events-none" : "opacity-100"
-            }`}
-          >
-            <Link
-              href="/"
-              className="font-[var(--font-display)] text-lg font-semibold tracking-tight text-white"
-            >
-              Healthfit.ai
-            </Link>
-          </div>
-        </div>
+    <>
+      <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-8">
+        <div
+          className={cn(
+            "mx-auto max-w-7xl rounded-[1.6rem] border transition-all duration-300",
+            elevated
+              ? "border-border/70 bg-white/82 shadow-[0_20px_48px_-34px_rgba(37,77,57,0.28)] backdrop-blur-xl"
+              : "border-white/14 bg-black/18 backdrop-blur-md"
+          )}
+        >
+          <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-5">
+            <BrandMark compact tone={elevated ? "default" : "inverse"} />
 
-        {/* Nav links */}
-        <nav className="hidden items-center gap-1 md:flex">
-          {marketingNav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`rounded-full px-4 py-2 text-sm transition-all duration-300 ${
-                scrolled
-                  ? "text-muted-foreground hover:bg-primary/8 hover:text-foreground"
-                  : "text-white/70 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+            <nav className="hidden items-center gap-1 md:flex">
+              {primaryNav.map((item) => {
+                const active = isActivePage(pathname, item.href);
 
-        {/* CTAs */}
-        <div className="flex items-center gap-2">
-          <MagneticButton>
-            <Link
-              href="/login"
-              className={`hidden rounded-full px-4 py-2.5 text-sm font-medium transition-colors sm:inline-flex ${
-                scrolled
-                  ? "text-foreground hover:text-primary"
-                  : "text-white/80 hover:text-white"
-              }`}
-            >
-              Sign in
-            </Link>
-          </MagneticButton>
-          <MagneticButton>
-            <Link
-              href="/login"
-              className="group relative inline-flex items-center overflow-hidden rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-white shadow-[0_18px_36px_-22px_rgba(56,125,78,0.45)] transition-all duration-300 hover:shadow-[0_24px_50px_-16px_rgba(56,125,78,0.6)]"
-            >
-              <span className="relative z-10">Start free</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-primary via-emerald-400 to-primary opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-            </Link>
-          </MagneticButton>
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className={`inline-flex items-center justify-center rounded-xl p-2 md:hidden ${
-              scrolled ? "text-foreground" : "text-white"
-            }`}
-          >
-            {mobileOpen ? (
-              <X className="size-5" />
-            ) : (
-              <Menu className="size-5" />
-            )}
-          </button>
-        </div>
-      </div>
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "rounded-full px-4 py-2 text-sm transition-colors",
+                      elevated
+                        ? active
+                          ? "bg-primary/10 text-foreground"
+                          : "text-muted-foreground hover:bg-primary/8 hover:text-foreground"
+                        : "text-white/72 hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
 
-      {/* Mobile nav */}
-      {mobileOpen && (
-        <div className="mx-auto mt-2 max-w-7xl rounded-[1.75rem] border border-border/40 bg-white/90 p-4 shadow-lg backdrop-blur-xl md:hidden">
-          <nav className="flex flex-col gap-1">
-            {marketingNav.map((item) => (
+            <div className="hidden items-center gap-2 sm:flex">
               <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                className="rounded-xl px-4 py-3 text-sm text-muted-foreground transition hover:bg-primary/8 hover:text-foreground"
+                href="/login"
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                  elevated
+                    ? "text-muted-foreground hover:text-foreground"
+                    : "text-white/75 hover:text-white"
+                )}
               >
-                {item.label}
+                Sign in
               </Link>
-            ))}
-          </nav>
+              <Link
+                href="/login"
+                className={cn(
+                  "rounded-full px-4 py-2 text-sm font-medium transition-colors",
+                  elevated
+                    ? "bg-foreground text-white hover:bg-primary"
+                    : "bg-white text-foreground hover:bg-emerald-100"
+                )}
+              >
+                Start free
+              </Link>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setMobileOpen((current) => !current)}
+              aria-expanded={mobileOpen}
+              aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
+              className={cn(
+                "inline-flex items-center justify-center rounded-full p-2.5 transition-colors md:hidden",
+                elevated
+                  ? "bg-secondary/75 text-foreground"
+                  : "bg-white/10 text-white"
+              )}
+            >
+              {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
+          </div>
+
+          {mobileOpen ? (
+            <div className="border-t border-border/60 px-4 pb-4 pt-3 md:hidden">
+              <nav className="grid gap-1">
+                {primaryNav.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="rounded-2xl px-4 py-3 text-sm text-muted-foreground transition hover:bg-secondary hover:text-foreground"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+              <div className="mt-4 grid gap-2">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-full border border-border/80 px-4 py-3 text-center text-sm font-medium text-foreground"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-full bg-foreground px-4 py-3 text-center text-sm font-medium text-white"
+                >
+                  Start free
+                </Link>
+              </div>
+            </div>
+          ) : null}
         </div>
-      )}
-    </header>
+      </header>
+
+      {!isHome ? <div aria-hidden className="h-24 sm:h-28" /> : null}
+    </>
   );
 }

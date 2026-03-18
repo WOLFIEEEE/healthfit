@@ -1,12 +1,14 @@
-import { desc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
+import { AdaptiveProgramCard } from "@/components/dashboard/adaptive-program-card";
 import { LogWorkoutForm } from "@/components/dashboard/log-workout-form";
 import { db } from "@/lib/drizzle/client";
 import { weeklyPrograms, workoutLogs } from "@/lib/drizzle/schema";
 import { requireCurrentAppUser } from "@/lib/healthfit/server/auth";
+import { getAdaptivePlanningSnapshot } from "@/lib/healthfit/server/adaptive-planning";
 
 export default async function WorkoutsPage() {
   const user = await requireCurrentAppUser();
-  const [program, logs] = await Promise.all([
+  const [program, logs, adaptivePlan] = await Promise.all([
     db.query.weeklyPrograms.findFirst({
       where: eq(weeklyPrograms.userId, user.supabaseUserId),
       with: {
@@ -19,10 +21,19 @@ export default async function WorkoutsPage() {
       orderBy: (table, helpers) => [helpers.desc(table.loggedAt)],
       limit: 8,
     }),
+    getAdaptivePlanningSnapshot(user.supabaseUserId),
   ]);
 
   return (
     <div className="space-y-6">
+      <AdaptiveProgramCard
+        mode={adaptivePlan.mode}
+        reason={adaptivePlan.reason}
+        summary={adaptivePlan.summary}
+        focus={adaptivePlan.focus}
+        nextActions={adaptivePlan.nextActions}
+        shouldPromptReplan={adaptivePlan.shouldPromptReplan}
+      />
       <section className="soft-panel px-6 py-6">
         <p className="pill">Workouts</p>
         <h1 className="mt-4 text-4xl font-semibold">Your weekly training flow</h1>

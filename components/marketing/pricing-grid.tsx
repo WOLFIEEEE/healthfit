@@ -117,7 +117,7 @@ export function PricingGrid(props: { ctaHref?: string }) {
               </div>
 
               <div className="mt-6 flex items-baseline gap-1">
-                <span className="text-5xl font-semibold tracking-tight">
+                <span className="text-4xl font-semibold tracking-tight sm:text-5xl">
                   ${plan.monthlyPrice}
                 </span>
                 <span className="text-sm text-muted-foreground">/ month</span>
@@ -137,8 +137,15 @@ export function PricingGrid(props: { ctaHref?: string }) {
                 )}
                 variant={plan.featured ? "default" : "outline"}
               >
-                <Link href={props.ctaHref ?? "/login"} className="group/btn flex items-center justify-center gap-2">
-                  {plan.monthlyPrice === 0 ? "Start free" : "Choose plan"}
+                <Link
+                  href={
+                    plan.monthlyPrice === 0
+                      ? props.ctaHref ?? "/login"
+                      : `/checkout/start?plan=${plan.key}`
+                  }
+                  className="group/btn flex items-center justify-center gap-2"
+                >
+                  {plan.monthlyPrice === 0 ? "Start free" : "Checkout as guest"}
                   <ArrowRight className="size-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
                 </Link>
               </Button>

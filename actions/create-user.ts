@@ -1,6 +1,7 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import type { User } from "@supabase/supabase-js";
 import { createDodoCustomer } from "@/actions/create-dodo-customer";
 import { getUser } from "@/actions/get-user";
 import { getPlanByKey } from "@/lib/config/plans";
@@ -15,30 +16,38 @@ type CreateUserResult = {
   onboardingCompleted: boolean;
 };
 
-export async function createUser(): ServerActionRes<CreateUserResult> {
-  const userRes = await getUser();
-
-  if (!userRes.success) {
-    return { success: false, error: "User not found" };
+export async function ensureAppUserRecord(
+  authUser: User
+): ServerActionRes<CreateUserResult> {
+  if (!authUser.email) {
+    return { success: false, error: "User email not found" };
   }
 
-  const authUser = userRes.data;
   const now = new Date().toISOString();
-  const role = resolveUserRole(authUser.email!);
+  const role = resolveUserRole(authUser.email);
+  const shouldBypassOnboarding = role === "admin";
   const plan = getPlanByKey("starter");
   const existingUser = await db.query.users.findFirst({
     where: eq(users.supabaseUserId, authUser.id),
   });
 
   if (existingUser) {
+    const onboardingCompleted =
+      shouldBypassOnboarding || existingUser.onboardingCompleted;
+
     await db
       .update(users)
       .set({
-        email: authUser.email!,
+        email: authUser.email,
         fullName: authUser.user_metadata.full_name ?? authUser.user_metadata.name,
         avatarUrl:
           authUser.user_metadata.avatar_url ?? authUser.user_metadata.picture,
         role,
+        onboardingCompleted,
+        wellnessConsentAccepted:
+          shouldBypassOnboarding || existingUser.wellnessConsentAccepted,
+        disclaimerAccepted:
+          shouldBypassOnboarding || existingUser.disclaimerAccepted,
         updatedAt: now,
         lastActiveAt: now,
       })
@@ -48,22 +57,22 @@ export async function createUser(): ServerActionRes<CreateUserResult> {
       userId: authUser.id,
       existingMetadata: authUser.user_metadata ?? {},
       role,
-      onboardingCompleted: existingUser.onboardingCompleted,
+      onboardingCompleted,
     });
 
     return {
       success: true,
       data: {
         userId: authUser.id,
-        onboardingCompleted: existingUser.onboardingCompleted,
+        onboardingCompleted,
       },
     };
   }
 
   let dodoCustomerId: string | null = null;
-  if (process.env.DODO_PAYMENTS_API_KEY) {
+  if (process.env.DODO_PAYMENTS_API_KEY && !shouldBypassOnboarding) {
     const dodoCustomerRes = await createDodoCustomer({
-      email: authUser.email!,
+      email: authUser.email,
       name: authUser.user_metadata.full_name ?? authUser.user_metadata.name,
     });
     if (dodoCustomerRes.success) {
@@ -73,7 +82,7 @@ export async function createUser(): ServerActionRes<CreateUserResult> {
 
   await db.insert(users).values({
     supabaseUserId: authUser.id,
-    email: authUser.email!,
+    email: authUser.email,
     fullName: authUser.user_metadata.full_name ?? authUser.user_metadata.name,
     avatarUrl:
       authUser.user_metadata.avatar_url ?? authUser.user_metadata.picture,
@@ -81,6 +90,9 @@ export async function createUser(): ServerActionRes<CreateUserResult> {
     lastActiveAt: now,
     ...buildUserDefaults(),
     role,
+    onboardingCompleted: shouldBypassOnboarding,
+    wellnessConsentAccepted: shouldBypassOnboarding,
+    disclaimerAccepted: shouldBypassOnboarding,
   });
 
   await db.insert(entitlements).values({
@@ -99,14 +111,24 @@ export async function createUser(): ServerActionRes<CreateUserResult> {
     userId: authUser.id,
     existingMetadata: authUser.user_metadata ?? {},
     role,
-    onboardingCompleted: false,
+    onboardingCompleted: shouldBypassOnboarding,
   });
 
   return {
     success: true,
     data: {
       userId: authUser.id,
-      onboardingCompleted: false,
+      onboardingCompleted: shouldBypassOnboarding,
     },
   };
+}
+
+export async function createUser(): ServerActionRes<CreateUserResult> {
+  const userRes = await getUser();
+
+  if (!userRes.success) {
+    return { success: false, error: "User not found" };
+  }
+
+  return ensureAppUserRecord(userRes.data);
 }

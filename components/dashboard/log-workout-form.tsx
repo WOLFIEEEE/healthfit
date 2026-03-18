@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function LogWorkoutForm() {
+  const router = useRouter();
   const [form, setForm] = useState({
     workoutName: "",
     durationMin: "45",
@@ -65,6 +67,9 @@ export function LogWorkoutForm() {
               });
               const payload = await response.json();
               setMessage(payload.success ? "Workout saved." : payload.error);
+              if (payload.success) {
+                router.refresh();
+              }
             })
           }
           disabled={isPending || !form.workoutName}

@@ -3,7 +3,6 @@ import { startOfDay } from "date-fns";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/lib/drizzle/client";
-import { getPlanByKey } from "@/lib/config/plans";
 import {
   coachConversations,
   coachMessages,
@@ -14,6 +13,14 @@ import {
 import { coachMessageSchema } from "@/lib/healthfit/contracts";
 import { createId } from "@/lib/healthfit/ids";
 import { generateCoachReply } from "@/lib/healthfit/server/ai";
+import { resolvePlanAccess } from "@/lib/healthfit/server/access";
+import {
+  buildCoachActions,
+  buildCoachContextSnapshot,
+  buildCoachMemorySnapshot,
+  buildCoachPromptContext,
+  buildProactiveBrief,
+} from "@/lib/healthfit/server/coach-intelligence";
 import { queueNotification } from "@/lib/healthfit/server/notifications";
 
 export async function POST(request: Request) {
@@ -51,12 +58,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const plan = getPlanByKey(userRecord.currentPlanKey);
-    const aiMessageLimit = Math.max(
-      activeEntitlement?.aiDailyMessageLimit ?? 0,
-      plan.entitlements.aiDailyMessages
-    );
-    if (aiMessageLimit <= 0) {
+    const access = resolvePlanAccess({
+      role: userRecord.role,
+      currentPlanKey: userRecord.currentPlanKey,
+      activeEntitlementPlanKey: activeEntitlement?.planKey ?? null,
+      activeEntitlementAiDailyLimit: activeEntitlement?.aiDailyMessageLimit ?? null,
+    });
+    if (access.aiDailyLimit <= 0) {
       return NextResponse.json(
         {
           success: false,
@@ -66,16 +74,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const todayMessages = await db.query.coachMessages.findMany({
-      where: and(
-        eq(coachMessages.userId, user.id),
-        eq(coachMessages.role, "user"),
-        gte(coachMessages.createdAt, startOfDay(new Date()).toISOString())
-      ),
-      limit: aiMessageLimit + 1,
-    });
+    const todayMessages = access.isUnlimited
+      ? []
+      : await db.query.coachMessages.findMany({
+          where: and(
+            eq(coachMessages.userId, user.id),
+            eq(coachMessages.role, "user"),
+            gte(coachMessages.createdAt, startOfDay(new Date()).toISOString())
+          ),
+          limit: access.aiDailyLimit + 1,
+        });
 
-    if (todayMessages.length >= aiMessageLimit) {
+    if (!access.isUnlimited && todayMessages.length >= access.aiDailyLimit) {
       return NextResponse.json(
         {
           success: false,
@@ -85,10 +95,28 @@ export async function POST(request: Request) {
       );
     }
 
+    const memory = await buildCoachMemorySnapshot(user.id);
+    const coachContext = buildCoachContextSnapshot(memory);
+    const proactiveBrief = buildProactiveBrief(memory);
     const now = new Date().toISOString();
-    const conversationId = payload.conversationId ?? createId("conv");
+    let conversationId = payload.conversationId;
 
-    if (!payload.conversationId) {
+    if (conversationId) {
+      const existingConversation = await db.query.coachConversations.findFirst({
+        where: and(
+          eq(coachConversations.id, conversationId),
+          eq(coachConversations.userId, user.id)
+        ),
+      });
+
+      if (!existingConversation) {
+        return NextResponse.json(
+          { success: false, error: "Conversation not found" },
+          { status: 404 }
+        );
+      }
+    } else {
+      conversationId = createId("conv");
       await db.insert(coachConversations).values({
         id: conversationId,
         userId: user.id,
@@ -107,7 +135,10 @@ export async function POST(request: Request) {
       role: "user",
       content: payload.message,
       safetyFlags: [],
-      promptSnapshot: {},
+      promptSnapshot: {
+        coachContext,
+        memoryContext: buildCoachPromptContext(memory),
+      },
       structuredOutput: {},
       createdAt: now,
       updatedAt: now,
@@ -121,7 +152,18 @@ export async function POST(request: Request) {
         "better energy, strong routines, and consistent training",
       activityLevel: profile?.activityLevel ?? "moderate",
       experienceLevel: profile?.experienceLevel ?? "beginner",
+      memoryContext: buildCoachPromptContext(memory),
     });
+    const coachActions = buildCoachActions({
+      memory,
+      message: payload.message,
+      safetyStatus: reply.safetyStatus,
+    });
+    const structuredReply = {
+      ...reply.structured,
+      actions: coachActions,
+      context: coachContext,
+    };
 
     await db.insert(coachMessages).values({
       id: createId("msg"),
@@ -135,8 +177,9 @@ export async function POST(request: Request) {
         goalSummary: profile?.goalSummary,
         activityLevel: profile?.activityLevel,
         experienceLevel: profile?.experienceLevel,
+        memoryContext: buildCoachPromptContext(memory),
       },
-      structuredOutput: reply.structured,
+      structuredOutput: structuredReply,
       createdAt: now,
       updatedAt: now,
     });
@@ -161,7 +204,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: reply,
+      data: {
+        ...reply,
+        structured: structuredReply,
+        actions: coachActions,
+        context: coachContext,
+        brief: proactiveBrief,
+      },
     });
   } catch (error) {
     return NextResponse.json(

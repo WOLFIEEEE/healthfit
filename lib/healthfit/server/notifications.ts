@@ -3,6 +3,7 @@ import { notifications } from "@/lib/drizzle/schema";
 import { createId } from "@/lib/healthfit/ids";
 
 export async function queueNotification(props: {
+  id?: string;
   userId: string;
   type: string;
   title: string;
@@ -12,16 +13,21 @@ export async function queueNotification(props: {
 }) {
   const now = new Date().toISOString();
 
-  await db.insert(notifications).values({
-    id: createId("notif"),
-    userId: props.userId,
-    type: props.type,
-    title: props.title,
-    body: props.body,
-    channel: props.channel ?? "in_app",
-    status: "queued",
-    metadata: props.metadata ?? {},
-    createdAt: now,
-    updatedAt: now,
-  });
+  await db
+    .insert(notifications)
+    .values({
+      id: props.id ?? createId("notif"),
+      userId: props.userId,
+      type: props.type,
+      title: props.title,
+      body: props.body,
+      channel: props.channel ?? "in_app",
+      status: "queued",
+      metadata: props.metadata ?? {},
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoNothing({
+      target: notifications.id,
+    });
 }

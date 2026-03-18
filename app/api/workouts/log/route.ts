@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/lib/drizzle/client";
-import { workoutLogs } from "@/lib/drizzle/schema";
 import { workoutLogSchema } from "@/lib/healthfit/contracts";
-import { createId } from "@/lib/healthfit/ids";
+import { logWorkoutEntry } from "@/lib/healthfit/server/member-loggers";
 
 export async function POST(request: Request) {
   try {
@@ -20,10 +18,7 @@ export async function POST(request: Request) {
     }
 
     const payload = workoutLogSchema.parse(await request.json());
-    const now = new Date().toISOString();
-
-    await db.insert(workoutLogs).values({
-      id: createId("workout"),
+    await logWorkoutEntry({
       userId: user.id,
       programDayId: payload.programDayId,
       workoutName: payload.workoutName,
@@ -33,9 +28,6 @@ export async function POST(request: Request) {
       recoveryScore: payload.recoveryScore,
       caloriesBurned: payload.caloriesBurned,
       notes: payload.notes,
-      loggedAt: now,
-      createdAt: now,
-      updatedAt: now,
     });
 
     return NextResponse.json({ success: true });

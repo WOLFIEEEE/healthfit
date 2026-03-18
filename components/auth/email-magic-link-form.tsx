@@ -13,11 +13,12 @@ type MagicLinkState =
 
 const initialState: MagicLinkState = null;
 
-export function EmailMagicLinkForm() {
+export function EmailMagicLinkForm(props: { nextPath?: string | null }) {
   const [state, formAction, pending] = useActionState(sendMagicLink, initialState);
 
   return (
     <form action={formAction} className="space-y-3">
+      <input type="hidden" name="next" value={props.nextPath ?? ""} />
       <div className="space-y-1">
         <label htmlFor="email" className="text-sm font-medium text-foreground">
           Email address

@@ -13,6 +13,7 @@ type BillingPlanGridProps = {
   currentPlanKey: string;
   currentSubscriptionId?: string | null;
   currentCancelAtNextBillingDate?: boolean | null;
+  isAdmin?: boolean;
   user: {
     email: string;
     fullName: string;
@@ -23,61 +24,70 @@ export function BillingPlanGrid({
   currentPlanKey,
   currentSubscriptionId,
   currentCancelAtNextBillingDate,
+  isAdmin = false,
   user,
 }: BillingPlanGridProps) {
   const [isPending, startTransition] = useTransition();
 
-  const handlePlanSelection = (productId: string | undefined, planKey: string) => {
+  const handlePlanSelection = (productId: string | undefined) => {
     if (!productId) {
       toast.error("This plan is not yet mapped to a Dodo product.");
       return;
     }
 
     startTransition(async () => {
-      if (currentSubscriptionId) {
-        const response = await changePlan({
-          subscriptionId: currentSubscriptionId,
-          productId,
-        });
+      try {
+        if (currentSubscriptionId) {
+          const response = await changePlan({
+            subscriptionId: currentSubscriptionId,
+            productId,
+          });
 
-        if (!response.success) {
-          toast.error(response.error);
+          if (!response.success) {
+            toast.error(response.error);
+            return;
+          }
+
+          toast.success("Plan updated successfully.");
+          window.location.reload();
           return;
         }
 
-        toast.success("Plan updated successfully.");
-        window.location.reload();
-        return;
-      }
-
-      const response = await fetch("/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          product_cart: [
-            {
-              product_id: productId,
-              quantity: 1,
-            },
-          ],
-          customer: {
-            email: user.email,
-            name: user.fullName,
+        const response = await fetch("/checkout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-          return_url: `${window.location.origin}/dashboard/billing`,
-        }),
-      });
+          body: JSON.stringify({
+            product_cart: [
+              {
+                product_id: productId,
+                quantity: 1,
+              },
+            ],
+          }),
+        });
 
-      const payload = await response.json();
+        const payload = response.headers
+          .get("content-type")
+          ?.includes("application/json")
+          ? ((await response.json()) as {
+              checkout_url?: string;
+              error?: string;
+            })
+          : { error: await response.text() };
 
-      if (!response.ok || !payload.checkout_url) {
-        toast.error(payload.error ?? "Failed to start checkout.");
-        return;
+        if (!response.ok || !payload.checkout_url) {
+          toast.error(payload.error ?? "Failed to start checkout.");
+          return;
+        }
+
+        window.location.assign(payload.checkout_url);
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to start checkout."
+        );
       }
-
-      window.location.href = payload.checkout_url;
     });
   };
 
@@ -119,12 +129,12 @@ export function BillingPlanGrid({
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm text-muted-foreground">{plan.tagline}</p>
-                  <h3 className="mt-2 text-3xl font-semibold">{plan.name}</h3>
+                  <h3 className="mt-2 text-2xl font-semibold sm:text-3xl">{plan.name}</h3>
                 </div>
                 {plan.badge ? <div className="pill">{plan.badge}</div> : null}
               </div>
               <div className="mt-6 flex items-end gap-2">
-                <span className="text-4xl font-semibold">${plan.monthlyPrice}</span>
+                <span className="text-3xl font-semibold sm:text-4xl">${plan.monthlyPrice}</span>
                 <span className="pb-1 text-sm text-muted-foreground">/ month</span>
               </div>
             </div>
@@ -139,10 +149,17 @@ export function BillingPlanGrid({
             <Button
               className="mt-6 rounded-full"
               variant={plan.key === currentPlanKey ? "outline" : "default"}
-              disabled={isPending || plan.key === currentPlanKey || plan.monthlyPrice === 0}
-              onClick={() => handlePlanSelection(plan.dodoProductId, plan.key)}
+              disabled={
+                isAdmin ||
+                isPending ||
+                plan.key === currentPlanKey ||
+                plan.monthlyPrice === 0
+              }
+              onClick={() => handlePlanSelection(plan.dodoProductId)}
             >
-              {plan.key === currentPlanKey
+              {isAdmin
+                ? "Managed by admin override"
+                : plan.key === currentPlanKey
                 ? "Current plan"
                 : currentSubscriptionId
                   ? `Switch to ${plan.name}`
@@ -152,8 +169,18 @@ export function BillingPlanGrid({
         ))}
       </div>
 
-      {currentSubscriptionId ? (
-        <div className="soft-panel flex flex-wrap items-center justify-between gap-3 px-6 py-5">
+      {isAdmin ? (
+        <div className="soft-panel flex flex-col items-start justify-between gap-3 px-6 py-5 sm:flex-row sm:items-center">
+          <div>
+            <h3 className="text-xl font-semibold">Admin access policy</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Internal accounts bypass checkout and subscription controls. Member
+              billing changes stay reserved for real customer accounts.
+            </p>
+          </div>
+        </div>
+      ) : currentSubscriptionId ? (
+        <div className="soft-panel flex flex-col items-start justify-between gap-3 px-6 py-5 sm:flex-row sm:items-center">
           <div>
             <h3 className="text-xl font-semibold">Subscription controls</h3>
             <p className="mt-1 text-sm text-muted-foreground">

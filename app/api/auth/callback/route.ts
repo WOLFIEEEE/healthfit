@@ -1,9 +1,23 @@
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { createUser } from "@/actions/create-user";
+import { resolvePostAuthPath } from "@/lib/auth/post-auth";
 import { createClient } from "@/lib/supabase/server";
 
+export function buildRedirectUrl(request: Request, path: string) {
+  const requestUrl = new URL(request.url);
+  const protocol =
+    request.headers.get("x-forwarded-proto") ?? requestUrl.protocol.replace(":", "");
+  const host =
+    request.headers.get("x-forwarded-host") ??
+    request.headers.get("host") ??
+    requestUrl.host;
+
+  return new URL(path, `${protocol}://${host}`);
+}
+
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type");
@@ -13,7 +27,7 @@ export async function GET(request: Request) {
 
   if (error) {
     return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(error)}`
+      buildRedirectUrl(request, `/login?error=${encodeURIComponent(error)}`)
     );
   }
 
@@ -24,18 +38,24 @@ export async function GET(request: Request) {
 
     if (exchangeError) {
       return NextResponse.redirect(
-        `${origin}/login?error=${encodeURIComponent(exchangeError.message)}`
+        buildRedirectUrl(
+          request,
+          `/login?error=${encodeURIComponent(exchangeError.message)}`
+        )
       );
     }
   } else if (tokenHash && type) {
     const { error: verifyError } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
-      type: type as "email" | "magiclink",
+      type: type as EmailOtpType,
     });
 
     if (verifyError) {
       return NextResponse.redirect(
-        `${origin}/login?error=${encodeURIComponent(verifyError.message)}`
+        buildRedirectUrl(
+          request,
+          `/login?error=${encodeURIComponent(verifyError.message)}`
+        )
       );
     }
   }
@@ -44,15 +64,17 @@ export async function GET(request: Request) {
 
   if (!createUserRes.success) {
     return NextResponse.redirect(
-      `${origin}/login?error=${encodeURIComponent(createUserRes.error)}`
+      buildRedirectUrl(
+        request,
+        `/login?error=${encodeURIComponent(createUserRes.error)}`
+      )
     );
   }
 
-  const redirectPath =
-    next ??
-    (createUserRes.data.onboardingCompleted
-      ? "/dashboard/overview"
-      : "/onboarding");
+  const redirectPath = resolvePostAuthPath(
+    next,
+    createUserRes.data.onboardingCompleted
+  );
 
-  return NextResponse.redirect(`${origin}${redirectPath}`);
+  return NextResponse.redirect(buildRedirectUrl(request, redirectPath));
 }

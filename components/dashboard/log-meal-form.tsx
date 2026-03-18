@@ -1,10 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function LogMealForm() {
+  const router = useRouter();
   const [form, setForm] = useState({
     title: "",
     calories: "550",
@@ -75,6 +77,9 @@ export function LogMealForm() {
               });
               const payload = await response.json();
               setMessage(payload.success ? "Meal saved." : payload.error);
+              if (payload.success) {
+                router.refresh();
+              }
             })
           }
           disabled={isPending || !form.title}

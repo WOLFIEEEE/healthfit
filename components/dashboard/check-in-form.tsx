@@ -1,11 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 export function CheckInForm() {
+  const router = useRouter();
   const [form, setForm] = useState({
     moodScore: "7",
     energyScore: "7",
@@ -99,6 +101,9 @@ export function CheckInForm() {
               setResponseMessage(
                 payload.success ? payload.summary ?? "Check-in saved." : payload.error
               );
+              if (payload.success) {
+                router.refresh();
+              }
             })
           }
           disabled={isPending}

@@ -158,7 +158,6 @@ export function ParallaxImage({
 
   return (
     <div ref={ref} className={cn("overflow-hidden", className)}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
         alt={alt}
@@ -310,7 +309,6 @@ export function ImageReveal({
 
   return (
     <div ref={ref} className={cn("overflow-hidden", className)} style={{ clipPath: "inset(100% 0 0 0)" }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={src} alt={alt} className="h-full w-full object-cover" />
     </div>
   );

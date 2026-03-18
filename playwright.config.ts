@@ -25,12 +25,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+    command: "npm run start:playwright",
     url: baseURL,
     timeout: 120_000,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     env: {
       NEXT_TELEMETRY_DISABLED: "1",
+      PLAYWRIGHT_BASE_PORT: String(port),
     },
   },
 });

@@ -1,6 +1,5 @@
 import { and, eq, gte } from "drizzle-orm";
 import { startOfDay, subDays } from "date-fns";
-import { getPlanByKey, getPlanByProductId } from "@/lib/config/plans";
 import { db } from "@/lib/drizzle/client";
 import {
   checkIns,
@@ -22,6 +21,7 @@ import {
   buildMembershipIntelligence,
   buildWeeklyPerformanceBrief,
 } from "@/lib/healthfit/premium";
+import { resolvePlanAccess } from "@/lib/healthfit/server/access";
 
 function average(values: Array<number | null | undefined>) {
   const valid = values.filter((value): value is number => typeof value === "number");
@@ -113,21 +113,15 @@ export async function getPremiumExperienceSnapshot(
     }),
   ]);
 
-  const subscriptionPlan =
-    getPlanByProductId(activeSubscription?.productId ?? null) ?? null;
-  const fallbackPlan = getPlanByKey(user.currentPlanKey);
-  const entitlementPlan = activeEntitlement
-    ? getPlanByKey(activeEntitlement.planKey)
-    : null;
-  const plan =
-    subscriptionPlan ??
-    (fallbackPlan.key !== "starter" ? fallbackPlan : entitlementPlan) ??
-    fallbackPlan;
-
-  const aiDailyLimit = Math.max(
-    activeEntitlement?.aiDailyMessageLimit ?? 0,
-    plan.entitlements.aiDailyMessages
-  );
+  const access = resolvePlanAccess({
+    role: user.role,
+    currentPlanKey: user.currentPlanKey,
+    activeEntitlementPlanKey: activeEntitlement?.planKey ?? null,
+    activeEntitlementAiDailyLimit: activeEntitlement?.aiDailyMessageLimit ?? null,
+    activeSubscriptionProductId: activeSubscription?.productId ?? null,
+  });
+  const plan = access.plan;
+  const aiDailyLimit = access.aiDailyLimit;
 
   const plannedWorkouts =
     latestProgram?.days.length ??
@@ -163,7 +157,8 @@ export async function getPremiumExperienceSnapshot(
     aiMessagesUsedToday: todayCoachMessages.length,
     aiDailyLimit,
     activeGoals: activeGoals.length,
-    maxActiveGoals: plan.entitlements.maxActiveGoals,
+    maxActiveGoals: access.maxActiveGoals,
+    unlimitedAccess: access.isUnlimited,
   });
 
   const coachPrompts = buildCoachPromptSuggestions({

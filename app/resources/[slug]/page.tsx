@@ -176,14 +176,14 @@ export default async function ResourcePage({ params }: ResourcePageProps) {
                     {resource.category}
                   </span>
                 </div>
-                <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-tight sm:text-5xl">
+                <h1 className="mt-5 max-w-4xl text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
                   {resource.title}
                 </h1>
                 <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
                   {resource.hero.summary}
                 </p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+              <div className="grid gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-1">
                 <div className="rounded-[1.5rem] border border-border/70 bg-white/80 p-5">
                   <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                     Key stat
@@ -217,7 +217,7 @@ export default async function ResourcePage({ params }: ResourcePageProps) {
         </section>
 
         <section className="page-shell py-4">
-          <div className="grid gap-8 lg:grid-cols-[0.95fr_0.05fr_1fr]">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1fr)]">
             <article className="space-y-8">
               <section className="soft-panel px-6 py-6">
                 <div className="flex items-center gap-2 text-sm font-medium text-foreground">
@@ -280,8 +280,6 @@ export default async function ResourcePage({ params }: ResourcePageProps) {
                 );
               })}
             </article>
-
-            <div />
 
             <aside className="space-y-8">
               <ResourceSourceList sources={sources} />

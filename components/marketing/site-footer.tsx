@@ -1,26 +1,18 @@
-"use client";
-
-import { useRef, useEffect } from "react";
 import Link from "next/link";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { BrandMark } from "@/components/healthfit/brand-mark";
-import { ArrowUpRight } from "lucide-react";
 
-gsap.registerPlugin(ScrollTrigger);
-
-const productLinks = [
-  { label: "Pricing", href: "/#pricing" },
+const platformLinks = [
+  { label: "Product", href: "/#product" },
   { label: "Programs", href: "/#programs" },
-  { label: "Resources", href: "/resources" },
-  { label: "Dashboard", href: "/dashboard/overview" },
+  { label: "Pricing", href: "/#pricing" },
+  { label: "Sign in", href: "/login" },
 ];
 
-const insightLinks = [
+const editorialLinks = [
   { label: "Insights", href: "/insights" },
+  { label: "Resources", href: "/resources" },
   { label: "Blog", href: "/blog" },
   { label: "News", href: "/news" },
-  { label: "Resources", href: "/resources" },
 ];
 
 const trustLinks = [
@@ -31,134 +23,90 @@ const trustLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
-export function SiteFooter() {
-  const ref = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    gsap.fromTo(
-      el.querySelectorAll("[data-footer-col]"),
-      { opacity: 0, y: 40 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.9,
-        stagger: 0.12,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: el,
-          start: "top 85%",
-          toggleActions: "play none none none",
-        },
-      }
-    );
-
-    return () => {
-      ScrollTrigger.getAll().forEach((t) => {
-        if (t.trigger === el) t.kill();
-      });
-    };
-  }, []);
-
+function FooterColumn(props: {
+  title: string;
+  links: Array<{ label: string; href: string }>;
+}) {
   return (
-    <footer ref={ref} className="page-shell pb-10 pt-20">
-      {/* Top CTA bar */}
-      <div className="mb-12 overflow-hidden rounded-[2rem] bg-foreground p-8 sm:p-12">
-        <div className="flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
-          <div>
-            <h2 className="text-3xl font-semibold text-white sm:text-4xl">
-              Ready to build a healthier routine?
-            </h2>
-            <p className="mt-3 max-w-lg text-sm leading-7 text-white/60">
-              Join thousands of members using Healthfit.ai to track, improve, and
-              maintain their wellness goals.
+    <div>
+      <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+        {props.title}
+      </p>
+      <div className="mt-4 space-y-3">
+        {props.links.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="block text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {item.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function SiteFooter() {
+  return (
+    <footer className="border-t border-border/60 bg-[linear-gradient(180deg,rgba(255,252,247,0),rgba(246,250,243,0.92))]">
+      <div className="page-shell pb-10 pt-16 sm:pt-20">
+        <section className="rounded-[1.9rem] border border-border/70 bg-white/76 px-6 py-7 shadow-[0_24px_70px_-48px_rgba(41,84,59,0.28)] backdrop-blur-sm sm:px-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                Minimal wellness workspace
+              </p>
+              <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
+                A calmer way to run your routines.
+              </h2>
+              <p className="mt-3 max-w-xl text-sm leading-7 text-muted-foreground">
+                Healthfit.ai brings workouts, meals, habits, check-ins, and AI
+                guidance into one clean system without making the experience feel
+                crowded.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/login"
+                className="rounded-full bg-foreground px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-primary"
+              >
+                Start free
+              </Link>
+              <Link
+                href="/resources"
+                className="rounded-full border border-border/80 bg-white px-5 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+              >
+                Browse resources
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <div className="mt-12 grid gap-10 lg:grid-cols-[1.35fr_0.7fr_0.7fr_0.8fr]">
+          <div className="max-w-sm">
+            <BrandMark />
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+              Wellness-first coaching, adaptive planning, and progress tracking
+              for members who want one dependable place to keep their routine on track.
             </p>
           </div>
-          <Link
-            href="/login"
-            className="group inline-flex items-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-foreground transition-all duration-300 hover:bg-primary hover:text-white hover:shadow-[0_20px_50px_-12px_rgba(56,125,78,0.5)]"
-          >
-            Get started today
-            <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </Link>
-        </div>
-      </div>
-
-      {/* Footer grid */}
-      <div className="grid gap-10 lg:grid-cols-[1.3fr_0.7fr_0.7fr_0.7fr]">
-        <div data-footer-col>
-          <BrandMark />
-          <p className="mt-4 max-w-sm text-sm leading-7 text-muted-foreground">
-            Healthfit.ai helps members build healthier routines through wellness
-            guidance, adaptive planning, and accountable progress tracking.
-          </p>
+          <FooterColumn title="Platform" links={platformLinks} />
+          <FooterColumn title="Editorial" links={editorialLinks} />
+          <FooterColumn title="Trust" links={trustLinks} />
         </div>
 
-        <div data-footer-col>
-          <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
-            Product
-          </p>
-          <div className="mt-5 space-y-3">
-            {productLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="group flex items-center gap-1 text-sm text-muted-foreground transition hover:text-foreground"
-              >
-                {item.label}
-                <ArrowUpRight className="size-3 opacity-0 transition-all duration-200 group-hover:opacity-100" />
-              </Link>
-            ))}
+        <div className="mt-10 flex flex-col gap-3 border-t border-border/60 pt-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>&copy; {new Date().getFullYear()} Healthfit.ai. Wellness guidance only.</p>
+          <div className="flex flex-wrap items-center gap-4">
+            <span>Non-clinical support only</span>
+            <Link href="/privacy" className="transition-colors hover:text-foreground">
+              Privacy
+            </Link>
+            <Link href="/contact" className="transition-colors hover:text-foreground">
+              Contact
+            </Link>
           </div>
-        </div>
-
-        <div data-footer-col>
-          <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
-            Insights
-          </p>
-          <div className="mt-5 space-y-3">
-            {insightLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="group flex items-center gap-1 text-sm text-muted-foreground transition hover:text-foreground"
-              >
-                {item.label}
-                <ArrowUpRight className="size-3 opacity-0 transition-all duration-200 group-hover:opacity-100" />
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div data-footer-col>
-          <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
-            Trust center
-          </p>
-          <div className="mt-5 space-y-3">
-            {trustLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="group flex items-center gap-1 text-sm text-muted-foreground transition hover:text-foreground"
-              >
-                {item.label}
-                <ArrowUpRight className="size-3 opacity-0 transition-all duration-200 group-hover:opacity-100" />
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom bar */}
-      <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border/50 pt-8 sm:flex-row">
-        <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} Healthfit.ai. Wellness guidance only.
-        </p>
-        <div className="flex items-center gap-6">
-          <span className="inline-flex size-2 animate-pulse rounded-full bg-emerald-500" />
-          <span className="text-xs text-muted-foreground">All systems operational</span>
         </div>
       </div>
     </footer>

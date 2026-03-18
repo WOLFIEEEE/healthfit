@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { createUser } from "@/actions/create-user";
+import { resolveAppUrl } from "@/lib/config/app-url";
 import { db } from "@/lib/drizzle/client";
 import {
   assessments,
@@ -16,6 +17,8 @@ import { onboardingSchema } from "@/lib/healthfit/contracts";
 import { createId } from "@/lib/healthfit/ids";
 import { buildInitialWeeklyProgram, getDefaultHabitTemplates } from "@/lib/healthfit/server/defaults";
 import { queueNotification } from "@/lib/healthfit/server/notifications";
+import { sendWelcomeEmail } from "@/lib/email/flows";
+import { hasResendEmailEnv } from "@/lib/email/resend";
 import { syncAuthMetadata } from "@/lib/healthfit/server/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -262,6 +265,19 @@ export async function POST(request: Request) {
       role: authUser.app_metadata?.role ?? "member",
       onboardingCompleted: true,
     });
+
+    if (hasResendEmailEnv() && authUser.email) {
+      try {
+        await sendWelcomeEmail({
+          email: authUser.email,
+          fullName: payload.fullName,
+          dashboardUrl: `${resolveAppUrl()}/dashboard/overview`,
+          weeklyFocus: programTemplate.focus,
+        });
+      } catch (emailError) {
+        console.error("Failed to send onboarding welcome email", emailError);
+      }
+    }
 
     return NextResponse.json({
       success: true,

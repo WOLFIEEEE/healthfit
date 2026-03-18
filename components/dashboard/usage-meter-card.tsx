@@ -14,7 +14,11 @@ export function UsageMeterCard(props: {
         </div>
         <div className="text-right">
           <p className="text-2xl font-semibold text-foreground">
-            {props.meter.limit > 0 ? `${props.meter.used}/${props.meter.limit}` : "Locked"}
+            {props.meter.unlimited
+              ? `${props.meter.used} used`
+              : props.meter.limit > 0
+                ? `${props.meter.used}/${props.meter.limit}`
+                : "Locked"}
           </p>
           <p
             className={cn(
@@ -26,7 +30,9 @@ export function UsageMeterCard(props: {
                   : "text-primary"
             )}
           >
-            {props.meter.status === "locked"
+            {props.meter.unlimited
+              ? "Unlimited"
+              : props.meter.status === "locked"
               ? "Upgrade required"
               : props.meter.status === "near_limit"
                 ? "Near limit"
@@ -44,7 +50,7 @@ export function UsageMeterCard(props: {
                 ? "bg-amber-500"
                 : "bg-primary"
           )}
-          style={{ width: `${props.meter.percentage}%` }}
+          style={{ width: `${props.meter.unlimited ? 100 : props.meter.percentage}%` }}
         />
       </div>
     </div>

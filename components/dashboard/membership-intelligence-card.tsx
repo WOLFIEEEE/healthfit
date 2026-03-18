@@ -7,6 +7,8 @@ export function MembershipIntelligenceCard(props: {
   membership: MembershipIntelligence;
   className?: string;
 }) {
+  const internalAccess = Boolean(props.membership.aiUsage.unlimited);
+
   return (
     <section className={cn("soft-panel px-6 py-6", props.className)}>
       <p className="pill">Membership intelligence</p>
@@ -61,14 +63,17 @@ export function MembershipIntelligenceCard(props: {
             Support lane: {props.membership.supportLane}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {props.membership.upgradePrompt ?? "Your current plan has healthy room for the next step."}
+            {internalAccess
+              ? "Internal admin accounts bypass billing gates, feature locks, and daily usage caps."
+              : props.membership.upgradePrompt ??
+                "Your current plan has healthy room for the next step."}
           </p>
         </div>
         <Link
-          href="/dashboard/billing"
+          href={internalAccess ? "/admin" : "/dashboard/billing"}
           className="inline-flex rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         >
-          Review plan
+          {internalAccess ? "Open admin" : "Review plan"}
         </Link>
       </div>
     </section>

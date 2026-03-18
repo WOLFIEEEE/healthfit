@@ -130,14 +130,14 @@ export function HomeContent({
   return (
     <>
       {/* ═══════════════ HERO ═══════════════ */}
-      <section className="relative h-screen overflow-hidden">
+      <section className="relative min-h-[100svh] overflow-hidden">
         {/* Video background + controls */}
         <HeroVideo />
         {/* Gradient — heavier at bottom where text lives */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
 
         <HeroAnimation>
-          <div className="page-shell relative flex h-screen flex-col justify-end pb-14 sm:pb-20">
+          <div className="page-shell relative flex min-h-[100svh] flex-col justify-end pb-10 pt-28 sm:pb-20 sm:pt-32">
             {/* Bottom-anchored content */}
             <div>
               <div
@@ -149,12 +149,12 @@ export function HomeContent({
 
               <div data-hero-heading className="mt-5">
                 <div className="overflow-hidden">
-                  <h1 className="line-inner font-[var(--font-display)] text-5xl font-bold leading-[1.0] tracking-tight text-white sm:text-7xl md:text-8xl lg:text-9xl">
+                  <h1 className="line-inner font-[var(--font-display)] text-[2.85rem] font-bold leading-[0.95] tracking-tight text-white sm:text-7xl md:text-8xl lg:text-9xl">
                     Health routines
                   </h1>
                 </div>
                 <div className="overflow-hidden">
-                  <h1 className="line-inner font-[var(--font-display)] text-5xl font-bold leading-[1.0] tracking-tight text-white sm:text-7xl md:text-8xl lg:text-9xl">
+                  <h1 className="line-inner font-[var(--font-display)] text-[2.85rem] font-bold leading-[0.95] tracking-tight text-white sm:text-7xl md:text-8xl lg:text-9xl">
                     that feel{" "}
                     <span className="text-emerald-400">grounded.</span>
                   </h1>
@@ -172,7 +172,7 @@ export function HomeContent({
                     check-ins — all in one clean dashboard.
                   </p>
 
-                  <div className="mt-5 flex items-center gap-3">
+                  <div className="mt-5 flex flex-wrap items-center gap-3">
                     <MagneticButton>
                       <Link
                         href="/login"
@@ -194,7 +194,7 @@ export function HomeContent({
                 </div>
 
                 {/* Stats — right side */}
-                <div className="flex items-center gap-8">
+                <div className="flex flex-wrap items-start gap-x-6 gap-y-4 sm:gap-8">
                   {stats.map((stat, i) => (
                     <div key={stat.label} data-hero-stat className="text-left">
                       <div className="text-xl font-semibold text-white sm:text-2xl">
@@ -224,7 +224,7 @@ export function HomeContent({
               <p className="pill">Product system</p>
             </Reveal>
             <TextReveal className="mt-4" delay={0.1}>
-              <h2 className="text-4xl font-semibold leading-tight sm:text-5xl">
+              <h2 className="text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
                 A complete wellness operating system
               </h2>
             </TextReveal>
@@ -242,7 +242,7 @@ export function HomeContent({
                 return (
                   <div
                     key={item.title}
-                    className="group flex gap-5 rounded-2xl border border-border/40 bg-white/60 p-5 transition-all duration-500 hover:border-primary/20 hover:bg-white hover:shadow-[0_20px_60px_-30px_rgba(46,114,78,0.2)]"
+                    className="group flex flex-col gap-4 rounded-2xl border border-border/40 bg-white/60 p-5 transition-all duration-500 hover:border-primary/20 hover:bg-white hover:shadow-[0_20px_60px_-30px_rgba(46,114,78,0.2)] sm:flex-row sm:gap-5"
                   >
                     <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/8 text-primary transition-colors duration-300 group-hover:bg-primary group-hover:text-white">
                       <Icon className="size-5" />
@@ -266,7 +266,7 @@ export function HomeContent({
               className="aspect-[4/5] rounded-[2rem]"
             />
             <Reveal delay={0.5} y={30}>
-              <div className="absolute -bottom-6 -left-6 rounded-2xl border border-border/50 bg-white/90 px-6 py-5 shadow-xl backdrop-blur-xl sm:-left-12">
+              <div className="absolute bottom-4 left-4 right-4 rounded-2xl border border-border/50 bg-white/90 px-5 py-4 shadow-xl backdrop-blur-xl sm:-bottom-6 sm:left-auto sm:right-4 sm:px-6 sm:py-5 lg:-left-12 lg:right-auto">
                 <div className="flex items-center gap-4">
                   <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-50">
                     <Activity className="size-7 text-primary" />
@@ -283,7 +283,7 @@ export function HomeContent({
       </section>
 
       {/* ═══════════════ IMAGE BREAK - FULL WIDTH ═══════════════ */}
-      <section className="relative h-[50vh] min-h-[400px] overflow-hidden">
+      <section className="relative h-[42vh] min-h-[320px] overflow-hidden sm:h-[50vh] sm:min-h-[400px]">
         <ParallaxImage
           src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1600&q=80"
           alt="Fitness lifestyle"
@@ -294,7 +294,7 @@ export function HomeContent({
         <div className="relative flex h-full items-center justify-center">
           <Reveal>
             <div className="text-center">
-              <h2 className="text-4xl font-semibold text-white sm:text-6xl">
+              <h2 className="text-3xl font-semibold text-white sm:text-5xl lg:text-6xl">
                 Your routine, elevated.
               </h2>
               <p className="mx-auto mt-4 max-w-md text-sm text-white/70 sm:text-base">
@@ -313,7 +313,7 @@ export function HomeContent({
             <p className="pill mx-auto">Member journey</p>
           </Reveal>
           <TextReveal className="mt-4" delay={0.1}>
-            <h2 className="text-4xl font-semibold sm:text-5xl">
+            <h2 className="text-3xl font-semibold sm:text-4xl lg:text-5xl">
               From onboarding to coaching
             </h2>
           </TextReveal>
@@ -359,11 +359,11 @@ export function HomeContent({
         <div className="page-shell">
           <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
             <div className="order-2 lg:order-1">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <ImageReveal
                   src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600&q=80"
                   alt="SaaS dashboard"
-                  className="col-span-2 aspect-[16/9] rounded-[2rem]"
+                  className="aspect-[16/9] rounded-[2rem] sm:col-span-2"
                 />
                 <ImageReveal
                   src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&q=80"
@@ -385,7 +385,7 @@ export function HomeContent({
                 <p className="pill">Platform layer</p>
               </Reveal>
               <TextReveal className="mt-4" delay={0.1}>
-                <h2 className="text-4xl font-semibold leading-tight sm:text-5xl">
+                <h2 className="text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
                   Built like a real SaaS product
                 </h2>
               </TextReveal>
@@ -434,7 +434,7 @@ export function HomeContent({
             </div>
             <div className="relative grid gap-10 lg:grid-cols-2 lg:items-center">
               <div>
-                <h2 className="text-3xl font-semibold text-white sm:text-5xl">
+                <h2 className="text-3xl font-semibold text-white sm:text-4xl lg:text-5xl">
                   Designed for wellness,
                   <br />
                   not diagnosis.
@@ -454,7 +454,7 @@ export function HomeContent({
                   </Link>
                 </MagneticButton>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:gap-4">
                 {[
                   { icon: HeartPulse, label: "Wellness-bounded AI", value: "100%" },
                   { icon: ShieldCheck, label: "Safety guardrails", value: "Active" },
@@ -489,7 +489,7 @@ export function HomeContent({
               <p className="pill">Resources</p>
             </Reveal>
             <TextReveal className="mt-4" delay={0.1}>
-              <h2 className="text-4xl font-semibold">
+              <h2 className="text-3xl font-semibold sm:text-4xl">
                 Research-backed wellness guidance
               </h2>
             </TextReveal>
@@ -559,7 +559,7 @@ export function HomeContent({
             </p>
           </Reveal>
           <TextReveal className="mt-4" delay={0.1}>
-            <h2 className="text-4xl font-semibold">
+            <h2 className="text-3xl font-semibold sm:text-4xl">
               {settings?.contentHubHeading ?? "Stories, insights, and updates"}
             </h2>
           </TextReveal>
@@ -622,7 +622,7 @@ export function HomeContent({
             <p className="pill mx-auto">Pricing</p>
           </Reveal>
           <TextReveal className="mt-4" delay={0.1}>
-            <h2 className="text-4xl font-semibold sm:text-5xl">
+            <h2 className="text-3xl font-semibold sm:text-4xl lg:text-5xl">
               Simple, transparent pricing
             </h2>
           </TextReveal>
@@ -647,12 +647,12 @@ export function HomeContent({
               alt="Community wellness"
               width={1200}
               height={500}
-              className="h-[400px] w-full object-cover"
+              className="h-[320px] w-full object-cover sm:h-[400px]"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-foreground/80 via-foreground/50 to-transparent" />
-            <div className="absolute inset-0 flex items-center px-8 sm:px-14">
+            <div className="absolute inset-0 flex items-center px-6 sm:px-14">
               <div className="max-w-lg">
-                <h2 className="text-3xl font-semibold text-white sm:text-5xl">
+                <h2 className="text-3xl font-semibold text-white sm:text-4xl lg:text-5xl">
                   More polish layering in next.
                 </h2>
                 <p className="mt-4 text-sm leading-7 text-white/70">

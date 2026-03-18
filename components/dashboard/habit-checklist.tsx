@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,7 @@ type HabitChecklistProps = {
 };
 
 export function HabitChecklist({ habits }: HabitChecklistProps) {
+  const router = useRouter();
   const [items, setItems] = useState(habits);
   const [isPending, startTransition] = useTransition();
 
@@ -40,7 +42,7 @@ export function HabitChecklist({ habits }: HabitChecklistProps) {
                     item.id === habit.id ? { ...item, completed: nextCompleted } : item
                   )
                 );
-                await fetch("/api/habits/log", {
+                const response = await fetch("/api/habits/log", {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
@@ -50,6 +52,18 @@ export function HabitChecklist({ habits }: HabitChecklistProps) {
                     status: nextCompleted ? "done" : "skipped",
                   }),
                 });
+                const payload = await response.json();
+
+                if (!response.ok || !payload.success) {
+                  setItems((current) =>
+                    current.map((item) =>
+                      item.id === habit.id ? { ...item, completed: habit.completed } : item
+                    )
+                  );
+                  return;
+                }
+
+                router.refresh();
               })
             }
             className={cn(

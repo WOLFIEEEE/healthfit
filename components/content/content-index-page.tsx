@@ -28,7 +28,7 @@ export function ContentIndexPage({
             <div className="hero-grid absolute inset-0 opacity-35" />
             <div className="relative space-y-6">
               <p className="pill">{section.title}</p>
-              <h1 className="max-w-4xl text-5xl font-semibold leading-[1.02] sm:text-6xl">
+              <h1 className="max-w-4xl text-4xl font-semibold leading-[1.02] sm:text-5xl lg:text-6xl">
                 {section.title} powered directly by Sanity.
               </h1>
               <p className="max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">

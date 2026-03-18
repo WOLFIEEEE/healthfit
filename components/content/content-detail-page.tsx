@@ -47,7 +47,7 @@ export function ContentDetailPage({
                 </span>
               ) : null}
             </div>
-            <h1 className="mt-5 max-w-4xl text-4xl font-semibold leading-tight sm:text-5xl">
+            <h1 className="mt-5 max-w-4xl text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
               {item.title}
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-muted-foreground sm:text-lg">
@@ -86,7 +86,7 @@ export function ContentDetailPage({
         </section>
 
         <section className="page-shell py-4">
-          <div className="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
             <article className="space-y-8">
               <SanityImage
                 image={item.featuredImage}
