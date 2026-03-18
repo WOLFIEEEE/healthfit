@@ -36,6 +36,9 @@ export const users = pgTable("users", {
     .notNull()
     .default(false),
   disclaimerAccepted: boolean("disclaimer_accepted").notNull().default(false),
+  onboardingTourCompleted: boolean("onboarding_tour_completed")
+    .notNull()
+    .default(false),
   lastActiveAt: timestamp("last_active_at", {
     mode: "string",
     withTimezone: true,
@@ -76,6 +79,9 @@ export const memberProfiles = pgTable("member_profiles", {
     withTimezone: true,
   }),
   profilePhotoPath: text("profile_photo_path"),
+  coachPersonalitySlug: text("coach_personality_slug"),
+  referralCode: text("referral_code"),
+  xpTotal: integer("xp_total").notNull().default(0),
   ...timestamps(),
 });
 
@@ -285,6 +291,7 @@ export const coachConversations = pgTable("coach_conversations", {
     .references(() => users.supabaseUserId, { onDelete: "cascade" }),
   title: text("title").notNull(),
   safetyStatus: text("safety_status").notNull().default("clear"),
+  personalitySlug: text("personality_slug"),
   lastMessageAt: timestamp("last_message_at", {
     mode: "string",
     withTimezone: true,
@@ -320,6 +327,7 @@ export const notifications = pgTable("notifications", {
   title: text("title").notNull(),
   body: text("body").notNull(),
   status: text("status").notNull().default("queued"),
+  actionUrl: text("action_url"),
   metadata: jsonb("metadata").notNull().default({}),
   scheduledAt: timestamp("scheduled_at", {
     mode: "string",
@@ -466,6 +474,228 @@ export const payments = pgTable("payments", {
   updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }),
 });
 
+// ── Feature expansion tables ──────────────────────────────────────────
+
+export const streaks = pgTable(
+  "streaks",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.supabaseUserId, { onDelete: "cascade" }),
+    category: text("category").notNull(),
+    currentStreak: integer("current_streak").notNull().default(0),
+    longestStreak: integer("longest_streak").notNull().default(0),
+    lastActiveDate: date("last_active_date", { mode: "string" }),
+    ...timestamps(),
+  },
+  (table) => ({
+    userCategoryIdx: uniqueIndex("streaks_user_category_idx").on(
+      table.userId,
+      table.category
+    ),
+  })
+);
+
+export const achievements = pgTable("achievements", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(),
+  iconEmoji: text("icon_emoji").notNull(),
+  criteria: jsonb("criteria").notNull(),
+  tier: text("tier").notNull().default("bronze"),
+  xpValue: integer("xp_value").notNull().default(10),
+  ...timestamps(),
+});
+
+export const userAchievements = pgTable(
+  "user_achievements",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.supabaseUserId, { onDelete: "cascade" }),
+    achievementId: text("achievement_id")
+      .notNull()
+      .references(() => achievements.id, { onDelete: "cascade" }),
+    earnedAt: timestamp("earned_at", {
+      mode: "string",
+      withTimezone: true,
+    }).notNull(),
+    metadata: jsonb("metadata").notNull().default({}),
+    ...timestamps(),
+  },
+  (table) => ({
+    userAchievementIdx: uniqueIndex("user_achievements_user_achievement_idx").on(
+      table.userId,
+      table.achievementId
+    ),
+  })
+);
+
+export const publicProfiles = pgTable("public_profiles", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.supabaseUserId, { onDelete: "cascade" }),
+  displayName: text("display_name").notNull(),
+  bio: text("bio"),
+  avatarUrl: text("avatar_url"),
+  slug: text("slug").notNull().unique(),
+  isPublic: boolean("is_public").notNull().default(false),
+  showStreaks: boolean("show_streaks").notNull().default(true),
+  showBadges: boolean("show_badges").notNull().default(true),
+  showStats: boolean("show_stats").notNull().default(false),
+  ...timestamps(),
+});
+
+export const challenges = pgTable("challenges", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  type: text("type").notNull(),
+  metric: text("metric").notNull(),
+  targetValue: real("target_value").notNull(),
+  startDate: timestamp("start_date", {
+    mode: "string",
+    withTimezone: true,
+  }).notNull(),
+  endDate: timestamp("end_date", {
+    mode: "string",
+    withTimezone: true,
+  }).notNull(),
+  status: text("status").notNull().default("active"),
+  createdByUserId: text("created_by_user_id").references(
+    () => users.supabaseUserId,
+    { onDelete: "set null" }
+  ),
+  rules: jsonb("rules").notNull().default({}),
+  ...timestamps(),
+});
+
+export const challengeParticipants = pgTable(
+  "challenge_participants",
+  {
+    id: text("id").primaryKey(),
+    challengeId: text("challenge_id")
+      .notNull()
+      .references(() => challenges.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.supabaseUserId, { onDelete: "cascade" }),
+    currentValue: real("current_value").notNull().default(0),
+    completedAt: timestamp("completed_at", {
+      mode: "string",
+      withTimezone: true,
+    }),
+    ...timestamps(),
+  },
+  (table) => ({
+    challengeUserIdx: uniqueIndex("challenge_participants_challenge_user_idx").on(
+      table.challengeId,
+      table.userId
+    ),
+  })
+);
+
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.supabaseUserId, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  userAgent: text("user_agent"),
+  ...timestamps(),
+});
+
+export const emailDigestPreferences = pgTable("email_digest_preferences", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.supabaseUserId, { onDelete: "cascade" }),
+  frequency: text("frequency").notNull().default("weekly"),
+  includeCoachSummary: boolean("include_coach_summary").notNull().default(true),
+  includeWeeklyStats: boolean("include_weekly_stats").notNull().default(true),
+  includeAchievements: boolean("include_achievements").notNull().default(true),
+  lastSentAt: timestamp("last_sent_at", {
+    mode: "string",
+    withTimezone: true,
+  }),
+  ...timestamps(),
+});
+
+export const referrals = pgTable("referrals", {
+  id: text("id").primaryKey(),
+  referrerUserId: text("referrer_user_id")
+    .notNull()
+    .references(() => users.supabaseUserId, { onDelete: "cascade" }),
+  referredEmail: text("referred_email").notNull(),
+  referredUserId: text("referred_user_id").references(
+    () => users.supabaseUserId,
+    { onDelete: "set null" }
+  ),
+  code: text("code").notNull().unique(),
+  status: text("status").notNull().default("pending"),
+  rewardGranted: boolean("reward_granted").notNull().default(false),
+  ...timestamps(),
+});
+
+export const onboardingTourProgress = pgTable("onboarding_tour_progress", {
+  id: text("id").primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .unique()
+    .references(() => users.supabaseUserId, { onDelete: "cascade" }),
+  completedSteps: jsonb("completed_steps").notNull().default([]),
+  tourCompleted: boolean("tour_completed").notNull().default(false),
+  lastStepAt: timestamp("last_step_at", {
+    mode: "string",
+    withTimezone: true,
+  }),
+  ...timestamps(),
+});
+
+export const leaderboardEntries = pgTable(
+  "leaderboard_entries",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.supabaseUserId, { onDelete: "cascade" }),
+    weekKey: text("week_key").notNull(),
+    metric: text("metric").notNull(),
+    value: real("value").notNull(),
+    rank: integer("rank"),
+    ...timestamps(),
+  },
+  (table) => ({
+    userWeekMetricIdx: uniqueIndex("leaderboard_user_week_metric_idx").on(
+      table.userId,
+      table.weekKey,
+      table.metric
+    ),
+  })
+);
+
+export const coachPersonalities = pgTable("coach_personalities", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  systemPromptModifier: text("system_prompt_modifier").notNull(),
+  avatarEmoji: text("avatar_emoji").notNull().default("🤖"),
+  planRequired: text("plan_required").notNull().default("pro"),
+  ...timestamps(),
+});
+
+// ── Relations ──────────────────────────────────────────────────────────
+
 export const usersRelations = relations(users, ({ many, one }) => ({
   memberProfile: one(memberProfiles, {
     fields: [users.supabaseUserId],
@@ -486,6 +716,24 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   entitlements: many(entitlements),
   subscriptions: many(subscriptions),
   payments: many(payments),
+  streaks: many(streaks),
+  userAchievements: many(userAchievements),
+  publicProfile: one(publicProfiles, {
+    fields: [users.supabaseUserId],
+    references: [publicProfiles.userId],
+  }),
+  challengeParticipations: many(challengeParticipants),
+  pushSubscriptions: many(pushSubscriptions),
+  emailDigestPreference: one(emailDigestPreferences, {
+    fields: [users.supabaseUserId],
+    references: [emailDigestPreferences.userId],
+  }),
+  referralsMade: many(referrals),
+  tourProgress: one(onboardingTourProgress, {
+    fields: [users.supabaseUserId],
+    references: [onboardingTourProgress.userId],
+  }),
+  leaderboardEntries: many(leaderboardEntries),
   currentSubscription: one(subscriptions, {
     fields: [users.currentSubscriptionId],
     references: [subscriptions.subscriptionId],
@@ -630,6 +878,103 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
   }),
 }));
 
+export const streaksRelations = relations(streaks, ({ one }) => ({
+  user: one(users, {
+    fields: [streaks.userId],
+    references: [users.supabaseUserId],
+  }),
+}));
+
+export const achievementsRelations = relations(achievements, ({ many }) => ({
+  userAchievements: many(userAchievements),
+}));
+
+export const userAchievementsRelations = relations(userAchievements, ({ one }) => ({
+  user: one(users, {
+    fields: [userAchievements.userId],
+    references: [users.supabaseUserId],
+  }),
+  achievement: one(achievements, {
+    fields: [userAchievements.achievementId],
+    references: [achievements.id],
+  }),
+}));
+
+export const publicProfilesRelations = relations(publicProfiles, ({ one }) => ({
+  user: one(users, {
+    fields: [publicProfiles.userId],
+    references: [users.supabaseUserId],
+  }),
+}));
+
+export const challengesRelations = relations(challenges, ({ many, one }) => ({
+  createdBy: one(users, {
+    fields: [challenges.createdByUserId],
+    references: [users.supabaseUserId],
+  }),
+  participants: many(challengeParticipants),
+}));
+
+export const challengeParticipantsRelations = relations(
+  challengeParticipants,
+  ({ one }) => ({
+    challenge: one(challenges, {
+      fields: [challengeParticipants.challengeId],
+      references: [challenges.id],
+    }),
+    user: one(users, {
+      fields: [challengeParticipants.userId],
+      references: [users.supabaseUserId],
+    }),
+  })
+);
+
+export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [pushSubscriptions.userId],
+    references: [users.supabaseUserId],
+  }),
+}));
+
+export const emailDigestPreferencesRelations = relations(
+  emailDigestPreferences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [emailDigestPreferences.userId],
+      references: [users.supabaseUserId],
+    }),
+  })
+);
+
+export const referralsRelations = relations(referrals, ({ one }) => ({
+  referrer: one(users, {
+    fields: [referrals.referrerUserId],
+    references: [users.supabaseUserId],
+  }),
+}));
+
+export const onboardingTourProgressRelations = relations(
+  onboardingTourProgress,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [onboardingTourProgress.userId],
+      references: [users.supabaseUserId],
+    }),
+  })
+);
+
+export const leaderboardEntriesRelations = relations(leaderboardEntries, ({ one }) => ({
+  user: one(users, {
+    fields: [leaderboardEntries.userId],
+    references: [users.supabaseUserId],
+  }),
+}));
+
+export const coachPersonalitiesRelations = relations(
+  coachPersonalities,
+  () => ({})
+);
+
 export type SelectUser = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type SelectMemberProfile = typeof memberProfiles.$inferSelect;
@@ -652,3 +997,15 @@ export type SelectAuditLog = typeof auditLogs.$inferSelect;
 export type SelectAnnouncement = typeof announcements.$inferSelect;
 export type SelectSubscription = typeof subscriptions.$inferSelect;
 export type SelectPayment = typeof payments.$inferSelect;
+export type SelectStreak = typeof streaks.$inferSelect;
+export type SelectAchievement = typeof achievements.$inferSelect;
+export type SelectUserAchievement = typeof userAchievements.$inferSelect;
+export type SelectPublicProfile = typeof publicProfiles.$inferSelect;
+export type SelectChallenge = typeof challenges.$inferSelect;
+export type SelectChallengeParticipant = typeof challengeParticipants.$inferSelect;
+export type SelectPushSubscription = typeof pushSubscriptions.$inferSelect;
+export type SelectEmailDigestPreference = typeof emailDigestPreferences.$inferSelect;
+export type SelectReferral = typeof referrals.$inferSelect;
+export type SelectOnboardingTourProgress = typeof onboardingTourProgress.$inferSelect;
+export type SelectLeaderboardEntry = typeof leaderboardEntries.$inferSelect;
+export type SelectCoachPersonality = typeof coachPersonalities.$inferSelect;

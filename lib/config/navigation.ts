@@ -8,6 +8,8 @@ import {
   Settings,
   Shield,
   Sparkles,
+  Trophy,
+  Users,
   UtensilsCrossed,
 } from "lucide-react";
 
@@ -29,6 +31,8 @@ export const dashboardNav = [
   { label: "Habits", href: "/dashboard/habits", icon: Sparkles },
   { label: "Check-ins", href: "/dashboard/check-ins", icon: ClipboardCheck },
   { label: "Progress", href: "/dashboard/progress", icon: BarChart3 },
+  { label: "Achievements", href: "/dashboard/achievements", icon: Trophy },
+  { label: "Community", href: "/dashboard/community", icon: Users },
   { label: "Billing", href: "/dashboard/billing", icon: CreditCard },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];

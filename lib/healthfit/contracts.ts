@@ -14,6 +14,8 @@ export type FeatureEntitlement = {
   progressPhotos: boolean;
   prioritySupport: boolean;
   customHabitTemplates: boolean;
+  communityFeatures: boolean;
+  workoutPlanGeneration: boolean;
   aiDailyMessages: number;
   maxActiveGoals: number;
 };

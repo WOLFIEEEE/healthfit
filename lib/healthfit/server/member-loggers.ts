@@ -13,6 +13,8 @@ import {
 import { createId } from "@/lib/healthfit/ids";
 import { buildCheckInSummary } from "@/lib/healthfit/server/defaults";
 import { queueNotification } from "@/lib/healthfit/server/notifications";
+import { updateStreaks } from "@/lib/healthfit/server/streaks";
+import { checkAndAwardAchievements } from "@/lib/healthfit/server/achievements";
 
 export async function logWorkoutEntry(props: {
   userId: string;
@@ -42,6 +44,9 @@ export async function logWorkoutEntry(props: {
     createdAt: now,
     updatedAt: now,
   });
+
+  await updateStreaks(props.userId, "workout");
+  await checkAndAwardAchievements(props.userId);
 }
 
 export async function logMealEntry(props: {
@@ -72,6 +77,8 @@ export async function logMealEntry(props: {
     createdAt: now,
     updatedAt: now,
   });
+
+  await updateStreaks(props.userId, "meal");
 }
 
 export async function upsertHabitLog(props: {
@@ -128,6 +135,11 @@ export async function upsertHabitLog(props: {
         updatedAt: now,
       },
     });
+
+  if (props.status === "done") {
+    await updateStreaks(props.userId, "habit");
+    await checkAndAwardAchievements(props.userId);
+  }
 
   return habitTemplate;
 }
@@ -195,6 +207,8 @@ export async function logCheckInEntry(props: {
     title: "Check-in saved",
     body: "Your latest wellness check-in has been captured.",
   });
+
+  await updateStreaks(props.userId, "checkin");
 
   return summary;
 }
