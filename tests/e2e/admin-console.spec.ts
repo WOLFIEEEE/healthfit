@@ -35,7 +35,11 @@ test.describe("admin console", () => {
         persistSession: false,
       },
     });
-    const sql = postgres(databaseUrl!, { ssl: "require" });
+    const sql = postgres(databaseUrl!, {
+      ssl: "require",
+      max: 1,
+      prepare: false,
+    });
     const suffix = Date.now();
     const adminEmail = `codex-admin-e2e-${suffix}@example.com`;
     const memberId = `codex-admin-member-${suffix}`;

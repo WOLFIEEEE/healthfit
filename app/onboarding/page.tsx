@@ -1,11 +1,18 @@
+import type { Metadata } from "next";
 import { OnboardingForm } from "@/components/onboarding/onboarding-form";
 import { BrandMark } from "@/components/healthfit/brand-mark";
+import { buildNoIndexMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = buildNoIndexMetadata({
+  title: "Onboarding",
+  description: "Member onboarding flow for Healthfit.ai.",
+});
 
 export default function OnboardingPage() {
   return (
-    <main className="page-shell min-h-screen py-10">
-      <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-        <section className="soft-panel px-6 py-8 sm:px-8">
+    <main className="page-shell min-h-screen py-12 sm:py-16">
+      <div className="grid gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:gap-10">
+        <section className="soft-panel px-7 py-10 sm:px-10">
           <BrandMark />
           <p className="pill mt-8">Step into Healthfit.ai</p>
           <h1 className="mt-5 text-4xl font-semibold leading-tight">
@@ -16,7 +23,7 @@ export default function OnboardingPage() {
             nutrition targets, and safety boundaries. It usually takes less than
             five minutes.
           </p>
-          <div className="mt-8 space-y-3">
+          <div className="mt-10 space-y-4">
             {[
               "Goal and routine capture",
               "Program generation and daily habits",
@@ -24,7 +31,7 @@ export default function OnboardingPage() {
             ].map((item) => (
               <div
                 key={item}
-                className="rounded-[1.5rem] bg-white/70 px-4 py-4 text-sm text-muted-foreground"
+                className="rounded-[1.5rem] bg-white/70 px-5 py-5 text-sm text-muted-foreground"
               >
                 {item}
               </div>

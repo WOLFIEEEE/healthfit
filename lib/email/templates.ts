@@ -184,6 +184,59 @@ export function renderMagicLinkEmail(props: {
   return { subject, html, text };
 }
 
+export function renderSignupConfirmationEmail(props: {
+  fullName: string;
+  confirmationLink: string;
+  nextPath?: string | null;
+}) {
+  const firstName = props.fullName.trim().split(/\s+/)[0] ?? "there";
+  const subject = "Confirm your Healthfit.ai account";
+  const destination = props.nextPath ?? "/onboarding";
+  const body = `
+    ${renderStatCards([
+      { label: "Destination", value: destination },
+      { label: "Access", value: "Password account" },
+      { label: "Next step", value: "Confirm and continue" },
+    ])}
+    ${renderBulletList([
+      "Confirm your email to activate your password-based Healthfit.ai account.",
+      "After confirmation, you will continue into onboarding or the page you originally requested.",
+      "If you did not try to create this account, you can ignore this email.",
+    ])}
+  `;
+
+  const html = renderEmailFrame({
+    preheader: "Confirm your email to activate your Healthfit.ai account.",
+    eyebrow: "Create account",
+    title: `Welcome, ${firstName}. Confirm your account.`,
+    intro:
+      "Use the secure link below to verify your email and finish setting up your Healthfit.ai password account.",
+    body,
+    ctaLabel: "Confirm your account",
+    ctaHref: props.confirmationLink,
+    ctaHint:
+      "For security, this confirmation link expires soon and should only be used by the person who created the account.",
+    footer:
+      "Healthfit.ai provides wellness guidance only and does not replace professional medical care.",
+  });
+
+  const text = [
+    "Healthfit.ai",
+    "",
+    `Welcome, ${firstName}. Confirm your account.`,
+    "Use the secure link below to verify your email and finish setting up your Healthfit.ai password account.",
+    "",
+    `Destination: ${destination}`,
+    `Confirmation link: ${props.confirmationLink}`,
+    "",
+    "If you did not try to create this account, you can ignore this email.",
+    "",
+    "Healthfit.ai provides wellness guidance only and does not replace professional medical care.",
+  ].join("\n");
+
+  return { subject, html, text };
+}
+
 export function renderWelcomeEmail(props: {
   fullName: string;
   dashboardUrl: string;

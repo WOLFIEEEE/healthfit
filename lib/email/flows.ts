@@ -2,6 +2,7 @@ import { sendResendEmail } from "@/lib/email/resend";
 import {
   renderMagicLinkEmail,
   renderPurchaseInviteEmail,
+  renderSignupConfirmationEmail,
   renderWelcomeEmail,
 } from "@/lib/email/templates";
 
@@ -50,6 +51,32 @@ export async function sendWelcomeEmail(props: {
       {
         name: "flow",
         value: "welcome",
+      },
+    ],
+  });
+}
+
+export async function sendSignupConfirmationEmail(props: {
+  email: string;
+  fullName: string;
+  confirmationLink: string;
+  nextPath?: string | null;
+}) {
+  const emailContent = renderSignupConfirmationEmail({
+    fullName: props.fullName,
+    confirmationLink: props.confirmationLink,
+    nextPath: props.nextPath,
+  });
+
+  return sendResendEmail({
+    to: props.email,
+    subject: emailContent.subject,
+    html: emailContent.html,
+    text: emailContent.text,
+    tags: [
+      {
+        name: "flow",
+        value: "signup-confirmation",
       },
     ],
   });

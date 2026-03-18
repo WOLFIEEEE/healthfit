@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { SendHorizontal } from "lucide-react";
 import {
   CoachAction,
@@ -51,11 +51,30 @@ export function CoachPanel({
   const [error, setError] = useState<string | null>(null);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const messageViewportRef = useRef<HTMLDivElement | null>(null);
   const planLocked = Boolean(usage && usage.limit <= 0 && !usage.unlimited);
   const dailyLimitReached = Boolean(
     usage && !usage.unlimited && usage.limit > 0 && usage.remaining <= 0
   );
   const coachDisabled = planLocked || dailyLimitReached;
+  const coachExamples = [
+    "I had chicken rice for lunch, around 650 calories and 40g protein.",
+    "I finished a 35 minute walk at effort 6 today.",
+    "Check-in: mood 7, energy 6, stress 4, adherence 8, sleep 7.5 hours.",
+  ];
+
+  useEffect(() => {
+    const viewport = messageViewportRef.current;
+
+    if (!viewport) {
+      return;
+    }
+
+    viewport.scrollTo({
+      top: viewport.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages.length]);
 
   const handleCoachAction = async (action: CoachAction) => {
     setActionFeedback(null);
@@ -192,14 +211,17 @@ export function CoachPanel({
   };
 
   return (
-    <div className="soft-panel flex h-[75svh] min-h-[30rem] flex-col overflow-hidden md:h-[70vh]">
-      <div className="border-b border-border/70 px-4 py-4 sm:px-5">
+    <div className="soft-panel min-w-0 grid min-h-[82svh] overflow-hidden md:min-h-[86svh] xl:min-h-[calc(100vh-10.5rem)] xl:grid-rows-[auto_minmax(0,1fr)]">
+      <div className="border-b border-border/70 px-6 py-6 sm:px-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">
               AI coach
             </p>
             <h2 className="mt-1 text-2xl font-semibold">Daily guidance</h2>
+            <p className="mt-2 max-w-3xl text-sm leading-7 text-muted-foreground">
+              Tell coach what you ate, trained, completed, or how your day felt and it can capture the log for you while keeping the conversation going.
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             {supportLane ? (
@@ -218,73 +240,119 @@ export function CoachPanel({
             ) : null}
           </div>
         </div>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {context?.badges.map((badge) => (
+            <div
+              key={`${badge.label}-${badge.value}`}
+              className={
+                badge.tone === "positive"
+                  ? "rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
+                  : badge.tone === "attention"
+                    ? "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700"
+                    : "rounded-full border border-border bg-white/70 px-3 py-1 text-xs font-medium text-muted-foreground"
+              }
+            >
+              {badge.label}: {badge.value}
+            </div>
+          ))}
+          {currentBrief?.nextActions[0] ? (
+            <div className="rounded-full border border-primary/15 bg-primary/8 px-3 py-1 text-xs font-medium text-primary">
+              Next: {currentBrief.nextActions[0]}
+            </div>
+          ) : null}
+        </div>
+        {context?.summary || currentBrief?.summary ? (
+          <div className="mt-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+              Coach context
+            </p>
+            <p className="mt-2 max-w-4xl text-sm leading-7 text-muted-foreground">
+              {context?.summary ?? currentBrief?.summary}
+            </p>
+          </div>
+        ) : null}
       </div>
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
-        {context ? (
-          <div className="surface-card px-4 py-4">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-foreground">Coach context</p>
-                <p className="mt-2 text-sm leading-7 text-muted-foreground">
-                  {context.summary}
-                </p>
+      <div className="min-h-0 flex flex-col">
+        <div
+          ref={messageViewportRef}
+          className="flex-1 overflow-y-auto px-5 py-6 sm:px-7 sm:py-7"
+        >
+          <div className="space-y-5">
+            {messages.length === 0 ? (
+              <div className="rounded-[1.75rem] bg-secondary px-6 py-6 text-sm text-muted-foreground">
+                {planLocked
+                  ? "Upgrade to a paid plan to unlock personalized coach conversations and direct logging from chat."
+                  : dailyLimitReached
+                    ? "You have used today's AI coach allowance. Come back tomorrow for a fresh set of messages."
+                    : "Ask a question or simply tell coach what you ate, trained, completed, or how the day felt."}
               </div>
-              <div className="flex flex-wrap gap-2">
-                {context.badges.map((badge) => (
+            ) : null}
+            {messages.map((item) => (
+              <div
+                key={item.id}
+                className={item.role === "assistant" ? "flex justify-start" : "flex justify-end"}
+              >
+                <div className="w-full max-w-[min(100%,52rem)]">
                   <div
-                    key={`${badge.label}-${badge.value}`}
                     className={
-                      badge.tone === "positive"
-                        ? "rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
-                        : badge.tone === "attention"
-                          ? "rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700"
-                          : "rounded-full border border-border bg-white/70 px-3 py-1 text-xs font-medium text-muted-foreground"
+                      item.role === "assistant"
+                        ? "rounded-[1.75rem] rounded-tl-md bg-secondary px-5 py-4 text-sm text-foreground shadow-[0_18px_40px_-34px_rgba(61,110,71,0.24)]"
+                        : "rounded-[1.75rem] rounded-tr-md bg-primary px-5 py-4 text-sm text-primary-foreground shadow-[0_18px_40px_-34px_rgba(46,114,78,0.4)]"
                     }
                   >
-                    {badge.label}: {badge.value}
+                    <p className="whitespace-pre-wrap leading-7">{item.content}</p>
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <div className="rounded-[1.25rem] bg-white/80 px-3 py-3 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Current focus:</span>{" "}
-                {context.currentFocus}
-              </div>
-              <div className="rounded-[1.25rem] bg-white/80 px-3 py-3 text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">Next shift:</span>{" "}
-                {context.nextShift}
-              </div>
-            </div>
-          </div>
-        ) : null}
-        {currentBrief ? (
-          <div className="surface-card px-4 py-4">
-            <p className="text-sm font-medium text-foreground">
-              {currentBrief.title}
-            </p>
-            <p className="mt-2 text-sm leading-7 text-muted-foreground">
-              {currentBrief.summary}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {currentBrief.nextActions.map((item) => (
-                <div
-                  key={item}
-                  className="rounded-full border border-border/70 bg-white/80 px-3 py-2 text-xs font-medium text-muted-foreground"
-                >
-                  {item}
+                  {item.role === "assistant" && item.actions?.length ? (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {item.actions.map((action) => (
+                        <div
+                          key={action.id}
+                          data-testid={`coach-action-card-${action.id}`}
+                          className="rounded-[1.25rem] border border-border/70 bg-white/80 px-4 py-4"
+                        >
+                          <p className="text-sm font-medium text-foreground">
+                            {action.label}
+                          </p>
+                          <p className="mt-1 text-xs leading-6 text-muted-foreground">
+                            {action.description}
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="mt-3 rounded-full bg-white/75"
+                            data-testid={`coach-action-button-${action.id}`}
+                            disabled={action.type !== "navigate" && activeActionId === action.id}
+                            onClick={() => handleCoachAction(action)}
+                          >
+                            {action.type !== "navigate" && activeActionId === action.id
+                              ? "Working..."
+                              : action.type === "navigate"
+                                ? "Open"
+                                : "Run action"}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        ) : null}
-        {promptSuggestions.length > 0 ? (
-          <div className="surface-card px-4 py-4">
-            <p className="text-sm font-medium text-foreground">
-              Premium prompt starters
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {promptSuggestions.map((prompt) => (
+        </div>
+        <div className="border-t border-border/70 px-5 py-5 sm:px-7">
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {coachExamples.map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => setMessage(example)}
+                  className="rounded-full border border-border/70 bg-white/80 px-3 py-2 text-left text-xs font-medium text-foreground transition hover:border-primary/25 hover:bg-white"
+                >
+                  {example}
+                </button>
+              ))}
+              {promptSuggestions.slice(0, 4).map((prompt) => (
                 <button
                   key={prompt}
                   type="button"
@@ -295,109 +363,48 @@ export function CoachPanel({
                 </button>
               ))}
             </div>
-          </div>
-        ) : null}
-        {messages.length === 0 ? (
-          <div className="rounded-[1.5rem] bg-secondary px-4 py-4 text-sm text-muted-foreground">
-            {planLocked
-              ? "Upgrade to a paid plan to unlock personalized coach conversations and daily prompt guidance."
-              : dailyLimitReached
-                ? "You have used today's AI coach allowance. Come back tomorrow for a fresh set of messages."
-              : "Ask about workouts, nutrition choices, adherence, or how to simplify your routine today."}
-          </div>
-        ) : null}
-        {messages.map((item) => (
-          <div
-            key={item.id}
-            className={item.role === "assistant" ? "mr-4 sm:mr-10" : "ml-4 sm:ml-10"}
-          >
-            <div
-              className={
-                item.role === "assistant"
-                  ? "rounded-[1.5rem] rounded-tl-md bg-secondary px-4 py-3 text-sm text-foreground"
-                  : "rounded-[1.5rem] rounded-tr-md bg-primary px-4 py-3 text-sm text-primary-foreground"
+            <Textarea
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              placeholder={
+                planLocked
+                  ? "Upgrade to Pro or Elite to use the AI coach."
+                  : dailyLimitReached
+                    ? "Today's AI message limit has been reached."
+                    : "Tell coach what you ate, trained, completed, or how you feel today."
               }
-            >
-              <p className="whitespace-pre-wrap">{item.content}</p>
-            </div>
-            {item.role === "assistant" && item.actions?.length ? (
-              <div className="mt-3 grid gap-2">
-                {item.actions.map((action) => (
-                  <div
-                    key={action.id}
-                    data-testid={`coach-action-card-${action.id}`}
-                    className="rounded-[1.25rem] border border-border/70 bg-white/80 px-3 py-3"
-                  >
-                    <p className="text-sm font-medium text-foreground">
-                      {action.label}
-                    </p>
-                    <p className="mt-1 text-xs leading-6 text-muted-foreground">
-                      {action.description}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="mt-3 rounded-full bg-white/75"
-                      data-testid={`coach-action-button-${action.id}`}
-                      disabled={action.type !== "navigate" && activeActionId === action.id}
-                      onClick={() => handleCoachAction(action)}
-                    >
-                      {action.type !== "navigate" && activeActionId === action.id
-                        ? "Working..."
-                        : action.type === "navigate"
-                          ? "Open"
-                          : "Run action"}
-                    </Button>
-                  </div>
-                ))}
+              className="min-h-32 rounded-[1.75rem] border-white/70 bg-white/80 sm:min-h-36"
+              disabled={coachDisabled}
+            />
+            <div className="flex flex-col items-start gap-3 2xl:flex-row 2xl:items-center 2xl:justify-between">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">
+                  Wellness guidance only. No diagnosis or medical treatment advice.
+                </p>
+                {upgradePrompt ? (
+                  <p className="text-xs text-muted-foreground">{upgradePrompt}</p>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-        ))}
-      </div>
-      <div className="border-t border-border/70 px-4 py-4 sm:px-5">
-        <div className="grid gap-3">
-          <Textarea
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            placeholder={
-              planLocked
-                ? "Upgrade to Pro or Elite to use the AI coach."
-                : dailyLimitReached
-                  ? "Today's AI message limit has been reached."
-                : "What should I focus on today to stay on track?"
-            }
-            className="min-h-24 rounded-[1.5rem] border-white/70 bg-white/80 sm:min-h-28"
-            disabled={coachDisabled}
-          />
-          <div className="flex items-center justify-between gap-3">
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">
-                Wellness guidance only. No diagnosis or medical treatment advice.
-              </p>
-              {upgradePrompt ? (
-                <p className="text-xs text-muted-foreground">{upgradePrompt}</p>
-              ) : null}
+              {planLocked ? (
+                <Button asChild className="rounded-full">
+                  <Link href="/dashboard/billing">Upgrade for AI coach</Link>
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isPending || dailyLimitReached}
+                  className="rounded-full"
+                >
+                  <SendHorizontal className="mr-2 size-4" />
+                  {dailyLimitReached ? "Limit reached today" : "Send"}
+                </Button>
+              )}
             </div>
-            {planLocked ? (
-              <Button asChild className="rounded-full">
-                <Link href="/dashboard/billing">Upgrade for AI coach</Link>
-              </Button>
-            ) : (
-              <Button
-                onClick={handleSubmit}
-                disabled={isPending || dailyLimitReached}
-                className="rounded-full"
-              >
-                <SendHorizontal className="mr-2 size-4" />
-                {dailyLimitReached ? "Limit reached today" : "Send"}
-              </Button>
-            )}
+            {actionFeedback ? (
+              <p className="text-sm text-primary">{actionFeedback}</p>
+            ) : null}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
           </div>
-          {actionFeedback ? (
-            <p className="text-sm text-primary">{actionFeedback}</p>
-          ) : null}
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
         </div>
       </div>
     </div>

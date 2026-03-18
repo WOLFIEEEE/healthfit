@@ -6,7 +6,7 @@ import { hasResendEmailEnv } from "@/lib/email/resend";
 import { resolveAppUrl } from "@/lib/config/app-url";
 import { getAdminAuthClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { hasSupabasePublicEnv } from "@/lib/supabase/env";
+import { hasSupabaseAdminEnv, hasSupabasePublicEnv } from "@/lib/supabase/env";
 
 export async function sendMagicLink(
   _previousState: { success: true; data: string } | { success: false; error: string } | null,
@@ -28,7 +28,7 @@ export async function sendMagicLink(
 
   const origin = resolveAppUrl();
 
-  if (hasResendEmailEnv()) {
+  if (hasResendEmailEnv() && hasSupabaseAdminEnv()) {
     try {
       const adminAuth = getAdminAuthClient();
       const { data, error } = await adminAuth.generateLink({

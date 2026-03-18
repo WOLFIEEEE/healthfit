@@ -6,18 +6,26 @@ import { ContentSectionNav } from "@/components/content/content-section-nav";
 import { ContentSetupState } from "@/components/content/content-setup-state";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
+import { buildPublicMetadata } from "@/lib/seo/metadata";
+import { buildCollectionStructuredData } from "@/lib/seo/schema";
 import { hasSanityConfig } from "@/sanity/env";
 import { getContentHubData, getSectionContent } from "@/sanity/lib/api";
 import { contentSections } from "@/sanity/lib/content";
 
-export const metadata: Metadata = {
+const insightsDescription =
+  "Healthfit.ai editorial content powered by Sanity across blog posts, articles, news, and guides.";
+
+export const metadata: Metadata = buildPublicMetadata({
   title: "Insights",
-  description:
-    "Healthfit.ai editorial content powered by Sanity across blog posts, articles, news, and guides.",
-  alternates: {
-    canonical: "/insights",
-  },
-};
+  description: insightsDescription,
+  path: "/insights",
+  keywords: [
+    "health insights",
+    "fitness articles",
+    "wellness guides",
+    "healthfit.ai editorial",
+  ],
+});
 
 export default async function InsightsPage() {
   const [{ settings, featured, latest }, blogItems, articleItems, newsItems, guideItems] =
@@ -34,11 +42,27 @@ export default async function InsightsPage() {
   const showcaseDescription =
     settings?.contentHubDescription ??
     "This hub pulls from separate blog, article, news, and guide schemas so Healthfit.ai can publish cleanly across different editorial formats.";
+  const collectionStructuredData = buildCollectionStructuredData({
+    name: "Healthfit.ai Insights",
+    description: insightsDescription,
+    path: "/insights",
+    items: contentSections.map((section) => ({
+      name: section.title,
+      path: section.href,
+    })),
+  });
 
   return (
     <div className="min-h-screen">
       <SiteHeader />
       <main>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(collectionStructuredData),
+          }}
+        />
+
         <section className="page-shell py-16 sm:py-20">
           <div className="soft-panel relative overflow-hidden px-6 py-8 sm:px-8 sm:py-10">
             <div className="hero-grid absolute inset-0 opacity-35" />

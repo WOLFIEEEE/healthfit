@@ -112,7 +112,7 @@ export function GuestCheckoutForm({
 
   return (
     <form
-      className="rounded-[2rem] border border-border/70 bg-white/95 p-5 shadow-[0_30px_80px_-40px_rgba(33,77,57,0.28)] sm:p-7"
+      className="rounded-[2rem] border border-border/70 bg-white/95 p-6 shadow-[0_30px_80px_-40px_rgba(33,77,57,0.28)] sm:p-8"
       onSubmit={handleSubmit}
       data-testid="guest-checkout-form"
     >
@@ -134,7 +134,7 @@ export function GuestCheckoutForm({
         into onboarding.
       </p>
 
-      <div className="mt-6 space-y-3">
+      <div className="mt-7 space-y-4">
         <Label htmlFor="guest-checkout-name">Full name</Label>
         <Input
           id="guest-checkout-name"
@@ -149,7 +149,7 @@ export function GuestCheckoutForm({
         />
       </div>
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-5 space-y-4">
         <Label htmlFor="guest-checkout-email">Email address</Label>
         <Input
           id="guest-checkout-email"
@@ -166,7 +166,7 @@ export function GuestCheckoutForm({
 
       <div className="mt-7">
         <p className="text-sm font-medium text-foreground">Choose your plan</p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {plans.map((plan) => {
             const isSelected = plan.key === selectedPlanKey;
 
@@ -176,7 +176,7 @@ export function GuestCheckoutForm({
                 type="button"
                 data-testid={`guest-checkout-plan-${plan.key}`}
                 className={cn(
-                  "rounded-[1.5rem] border px-4 py-4 text-left transition-all",
+                  "rounded-[1.5rem] border px-5 py-5 text-left transition-all",
                   isSelected
                     ? "border-primary/40 bg-primary/6 shadow-[0_18px_50px_-32px_rgba(33,77,57,0.4)]"
                     : "border-border/70 bg-stone-50/70 hover:border-primary/20 hover:bg-white"
@@ -209,7 +209,7 @@ export function GuestCheckoutForm({
         </div>
       </div>
 
-      <div className="mt-6 rounded-[1.5rem] border border-border/70 bg-stone-50/80 p-5">
+      <div className="mt-6 rounded-[1.5rem] border border-border/70 bg-stone-50/80 p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-medium text-foreground">
@@ -231,7 +231,7 @@ export function GuestCheckoutForm({
           ) : null}
         </div>
 
-        <div className="mt-4 grid gap-2">
+        <div className="mt-5 grid gap-3">
           {selectedPlan.features.slice(0, 4).map((feature) => (
             <div
               key={feature}
@@ -263,7 +263,7 @@ export function GuestCheckoutForm({
         <ArrowRight className="size-4" />
       </Button>
 
-      <div className="mt-5 flex flex-col gap-3 text-sm leading-6 text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 flex flex-col gap-4 text-sm leading-6 text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <p>
           Already have an account?{" "}
           <Link href="/login" className="font-medium text-primary hover:underline">

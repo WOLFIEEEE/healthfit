@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { buildNoIndexMetadata } from "@/lib/seo/metadata";
 import { requireAdminUser } from "@/lib/healthfit/server/auth";
 import { getAdminSnapshot } from "@/lib/healthfit/server/dashboard";
 import { getAdminEmailConfigLabel } from "@/lib/config/admin";
+
+export const metadata: Metadata = buildNoIndexMetadata({
+  title: "Admin Console",
+  description: "Internal Healthfit.ai admin operations console.",
+});
 
 function formatDate(value: string | null | undefined) {
   if (!value) {

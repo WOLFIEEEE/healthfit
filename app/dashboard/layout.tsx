@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import { AppShell } from "@/components/dashboard/app-shell";
+import { buildNoIndexMetadata } from "@/lib/seo/metadata";
 import { requireCurrentAppUser } from "@/lib/healthfit/server/auth";
 import { getAdminAccessPlan } from "@/lib/healthfit/server/access";
 import { getPlanByKey } from "@/lib/config/plans";
+
+export const metadata: Metadata = buildNoIndexMetadata({
+  title: "Member Dashboard",
+  description: "Authenticated Healthfit.ai member workspace.",
+});
 
 export default async function DashboardLayout({
   children,

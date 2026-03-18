@@ -41,7 +41,16 @@ export function ContentListSection({
       {items.length ? (
         <div className="mt-8 grid gap-5 lg:grid-cols-3">
           {items.map((item, index) => (
-            <ContentCard key={item._id} item={item} priority={index === 0} />
+            <div
+              key={item._id}
+              className={index === 0 && items.length > 2 ? "lg:col-span-2" : undefined}
+            >
+              <ContentCard
+                item={item}
+                priority={index === 0}
+                variant={index === 0 && items.length > 2 ? "featured" : "default"}
+              />
+            </div>
           ))}
         </div>
       ) : (

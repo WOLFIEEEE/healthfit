@@ -22,9 +22,12 @@ export function CheckInForm() {
   const [isPending, startTransition] = useTransition();
 
   return (
-    <div className="soft-panel px-5 py-5">
+    <div className="soft-panel min-w-0 px-8 py-9 sm:px-10">
       <h3 className="text-xl font-semibold">Daily check-in</h3>
-      <div className="mt-4 grid gap-3 md:grid-cols-5">
+      <p className="mt-2 text-sm leading-7 text-muted-foreground">
+        Keep the signal lightweight enough to finish in a minute, but open enough for the coach and weekly recap to react properly.
+      </p>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {[
           ["Mood", "moodScore"],
           ["Energy", "energyScore"],
@@ -47,7 +50,7 @@ export function CheckInForm() {
           />
         ))}
       </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <div className="mt-5 grid gap-4 xl:grid-cols-2">
         <Textarea
           placeholder="Wins from today"
           value={form.wins}
@@ -71,9 +74,9 @@ export function CheckInForm() {
         onChange={(event) =>
           setForm((current) => ({ ...current, notes: event.target.value }))
         }
-        className="mt-3 rounded-[1.5rem] bg-white/80"
+        className="mt-4 rounded-[1.5rem] bg-white/80"
       />
-      <div className="mt-4 flex items-center justify-between gap-3">
+      <div className="mt-5 flex flex-col items-start gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
         <p className="text-sm text-muted-foreground">
           Check-ins power your weekly recap, adherence trends, and coach context.
         </p>

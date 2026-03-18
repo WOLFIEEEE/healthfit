@@ -34,7 +34,14 @@ function resolveResendFromEmail() {
 }
 
 export function hasResendEmailEnv() {
-  return typeof process.env.RESEND_API_KEY === "string" && process.env.RESEND_API_KEY.length > 0;
+  const hasApiKey =
+    typeof process.env.RESEND_API_KEY === "string" &&
+    process.env.RESEND_API_KEY.length > 0;
+  const hasFromEmail =
+    typeof process.env.RESEND_FROM_EMAIL === "string" &&
+    process.env.RESEND_FROM_EMAIL.length > 0;
+
+  return hasApiKey && (hasFromEmail || process.env.NODE_ENV !== "production");
 }
 
 export async function sendResendEmail(props: SendResendEmailProps) {
@@ -44,6 +51,7 @@ export async function sendResendEmail(props: SendResendEmailProps) {
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
+    signal: AbortSignal.timeout(5_000),
     headers: {
       Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
       "Content-Type": "application/json",

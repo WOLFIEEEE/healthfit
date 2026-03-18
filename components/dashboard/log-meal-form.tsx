@@ -19,16 +19,19 @@ export function LogMealForm() {
   const [isPending, startTransition] = useTransition();
 
   return (
-    <div className="soft-panel px-5 py-5">
+    <div className="soft-panel min-w-0 px-8 py-9 sm:px-10">
       <h3 className="text-xl font-semibold">Log a meal</h3>
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <p className="mt-2 text-sm leading-7 text-muted-foreground">
+        Capture the main meal details quickly so nutrition targets and daily summaries stay useful without turning this into a food diary wall.
+      </p>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
         <Input
           placeholder="Meal title"
           value={form.title}
           onChange={(event) =>
             setForm((current) => ({ ...current, title: event.target.value }))
           }
-          className="rounded-2xl bg-white/80 md:col-span-3"
+          className="rounded-2xl bg-white/80 sm:col-span-2"
         />
         {[
           ["Calories", "calories"],
@@ -52,7 +55,7 @@ export function LogMealForm() {
           />
         ))}
       </div>
-      <div className="mt-4 flex items-center justify-between gap-3">
+      <div className="mt-5 flex flex-col items-start gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
         <p className="text-sm text-muted-foreground">
           Manual food logging keeps v1 simple while still powering targets and
           weekly insights.

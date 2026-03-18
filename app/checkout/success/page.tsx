@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CircleCheckBig, Mail, ShieldCheck } from "lucide-react";
 import { BrandMark } from "@/components/healthfit/brand-mark";
 import { getPlanByKey } from "@/lib/config/plans";
+import { buildNoIndexMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = buildNoIndexMetadata({
+  title: "Checkout Success",
+  description: "Post-checkout confirmation flow for Healthfit.ai.",
+});
 
 export default async function CheckoutSuccessPage(props: {
   searchParams: Promise<{
@@ -39,7 +46,7 @@ export default async function CheckoutSuccessPage(props: {
               into onboarding.
             </p>
 
-            <div className="mt-8 grid gap-4 rounded-[1.8rem] border border-border/70 bg-stone-50/70 p-5 text-left sm:grid-cols-3">
+            <div className="mt-8 grid gap-5 rounded-[1.8rem] border border-border/70 bg-stone-50/70 p-6 text-left sm:grid-cols-3">
               {[
                 {
                   icon: Mail,
@@ -60,7 +67,7 @@ export default async function CheckoutSuccessPage(props: {
                 const Icon = item.icon;
 
                 return (
-                  <div key={item.title} className="rounded-[1.4rem] bg-white px-4 py-4">
+                  <div key={item.title} className="rounded-[1.4rem] bg-white px-5 py-5">
                     <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/8">
                       <Icon className="size-4 text-primary" />
                     </div>

@@ -40,7 +40,11 @@ test.describe("authenticated member coach flow", () => {
         persistSession: false,
       },
     });
-    const sql = postgres(databaseUrl!, { ssl: "require" });
+    const sql = postgres(databaseUrl!, {
+      ssl: "require",
+      max: 1,
+      prepare: false,
+    });
     const email = `codex-e2e-${Date.now()}@example.com`;
     let userId: string | null = null;
 

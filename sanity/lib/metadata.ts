@@ -1,27 +1,22 @@
 import type { Metadata } from "next";
-import { siteConfig } from "@/lib/config/site";
+import { buildPublicMetadata } from "@/lib/seo/metadata";
 import { urlForImage } from "./image";
 import { getSectionByKey, type ContentSectionKey } from "./content";
 import type { SanityContentItem } from "./types";
 
-const siteUrl = siteConfig.url.replace(/\/$/, "");
-
 export function buildSectionMetadata(sectionKey: ContentSectionKey): Metadata {
   const section = getSectionByKey(sectionKey);
 
-  return {
+  return buildPublicMetadata({
     title: section.title,
     description: section.description,
-    alternates: {
-      canonical: section.href,
-    },
-    openGraph: {
-      title: `${section.title} | ${siteConfig.name}`,
-      description: section.description,
-      url: `${siteUrl}${section.href}`,
-      type: "website",
-    },
-  };
+    path: section.href,
+    keywords: [
+      `${section.title.toLowerCase()} health content`,
+      `${section.title.toLowerCase()} wellness`,
+      "healthfit.ai insights",
+    ],
+  });
 }
 
 export function buildContentMetadata(
@@ -35,19 +30,15 @@ export function buildContentMetadata(
   const title = item.seo?.metaTitle ?? item.title;
   const description = item.seo?.metaDescription ?? item.excerpt ?? section.description;
 
-  return {
+  return buildPublicMetadata({
     title,
     description,
-    robots: item.seo?.noIndex ? { index: false, follow: true } : undefined,
-    alternates: {
-      canonical: `${section.href}/${item.slug}`,
-    },
-    openGraph: {
-      title,
-      description,
-      url: `${siteUrl}${section.href}/${item.slug}`,
-      type: "article",
-      images: imageUrl ? [{ url: imageUrl }] : undefined,
-    },
-  };
+    path: `${section.href}/${item.slug}`,
+    type: "article",
+    image: imageUrl,
+    keywords: item.tags?.length
+      ? [...item.tags, section.title.toLowerCase(), "healthfit.ai"]
+      : [section.title.toLowerCase(), "healthfit.ai"],
+    noIndex: Boolean(item.seo?.noIndex),
+  });
 }

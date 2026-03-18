@@ -38,7 +38,11 @@ test.describe("responsive authenticated dashboard", () => {
         persistSession: false,
       },
     });
-    const sql = postgres(databaseUrl!, { ssl: "require" });
+    const sql = postgres(databaseUrl!, {
+      ssl: "require",
+      max: 1,
+      prepare: false,
+    });
     const email = `codex-e2e-responsive-${Date.now()}@example.com`;
     let userId: string | null = null;
 

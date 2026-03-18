@@ -13,6 +13,10 @@ import {
 import { coachMessageSchema } from "@/lib/healthfit/contracts";
 import { createId } from "@/lib/healthfit/ids";
 import { generateCoachReply } from "@/lib/healthfit/server/ai";
+import {
+  executeCoachAction,
+  isAutomaticCoachLogAction,
+} from "@/lib/healthfit/server/coach-actions";
 import { resolvePlanAccess } from "@/lib/healthfit/server/access";
 import {
   buildCoachActions,
@@ -95,9 +99,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const memory = await buildCoachMemorySnapshot(user.id);
-    const coachContext = buildCoachContextSnapshot(memory);
-    const proactiveBrief = buildProactiveBrief(memory);
+    let memory = await buildCoachMemorySnapshot(user.id);
+    let coachContext = buildCoachContextSnapshot(memory);
+    let proactiveBrief = buildProactiveBrief(memory);
     const now = new Date().toISOString();
     let conversationId = payload.conversationId;
 
@@ -153,15 +157,61 @@ export async function POST(request: Request) {
       activityLevel: profile?.activityLevel ?? "moderate",
       experienceLevel: profile?.experienceLevel ?? "beginner",
       memoryContext: buildCoachPromptContext(memory),
+      habitSlugs: memory.habitSlugs,
+      sessionLengthMin: memory.sessionLengthMin,
     });
+    const loggedActions = (reply.structured.loggedActions ?? []).filter(
+      isAutomaticCoachLogAction
+    );
+    const autoAppliedMessages: string[] = [];
+    const autoApplyErrors: string[] = [];
+
+    if (reply.safetyStatus === "clear" && loggedActions.length > 0) {
+      for (const action of loggedActions) {
+        try {
+          const result = await executeCoachAction(user.id, action);
+          autoAppliedMessages.push(result.message);
+        } catch (error) {
+          autoApplyErrors.push(
+            error instanceof Error ? error.message : "A coach log could not be saved."
+          );
+        }
+      }
+
+      memory = await buildCoachMemorySnapshot(user.id);
+      coachContext = buildCoachContextSnapshot(memory);
+      proactiveBrief = buildProactiveBrief(memory);
+    }
+
     const coachActions = buildCoachActions({
       memory,
       message: payload.message,
       safetyStatus: reply.safetyStatus,
-    });
+    }).filter(
+      (action) =>
+        !loggedActions.some(
+          (loggedAction) =>
+            loggedAction.type === action.type &&
+            isAutomaticCoachLogAction(loggedAction)
+        )
+    );
+    const actionSummary = [
+      autoAppliedMessages.length > 0
+        ? `Captured for you:\n- ${autoAppliedMessages.join("\n- ")}`
+        : null,
+      autoApplyErrors.length > 0
+        ? `Could not save automatically:\n- ${autoApplyErrors.join("\n- ")}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    const assistantMessage = actionSummary
+      ? `${actionSummary}\n\n${reply.message}`
+      : reply.message;
     const structuredReply = {
       ...reply.structured,
       actions: coachActions,
+      loggedActions,
       context: coachContext,
     };
 
@@ -170,7 +220,7 @@ export async function POST(request: Request) {
       conversationId,
       userId: user.id,
       role: "assistant",
-      content: reply.message,
+      content: assistantMessage,
       safetyFlags: reply.flags,
       model: process.env.HEALTHFIT_AI_MODEL ?? "fallback",
       promptSnapshot: {
@@ -206,10 +256,12 @@ export async function POST(request: Request) {
       success: true,
       data: {
         ...reply,
+        message: assistantMessage,
         structured: structuredReply,
         actions: coachActions,
         context: coachContext,
         brief: proactiveBrief,
+        autoAppliedMessages,
       },
     });
   } catch (error) {

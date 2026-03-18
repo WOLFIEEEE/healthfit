@@ -115,17 +115,17 @@ export function BillingPlanGrid({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-5 lg:grid-cols-3">
+    <div className="space-y-8">
+      <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3 2xl:gap-8">
         {planCatalog.map((plan) => (
           <article
             key={plan.key}
             className={cn(
-              "soft-panel flex flex-col px-6 py-6",
+              "soft-panel min-w-0 flex flex-col px-8 py-8",
               plan.key === currentPlanKey && "ring-2 ring-primary/30"
             )}
           >
-            <div className={cn("rounded-[1.5rem] bg-gradient-to-br p-5", plan.accentClassName)}>
+            <div className={cn("rounded-[1.5rem] bg-gradient-to-br p-6", plan.accentClassName)}>
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm text-muted-foreground">{plan.tagline}</p>
@@ -138,7 +138,7 @@ export function BillingPlanGrid({
                 <span className="pb-1 text-sm text-muted-foreground">/ month</span>
               </div>
             </div>
-            <ul className="mt-6 space-y-3 text-sm text-muted-foreground">
+            <ul className="mt-7 space-y-4 text-sm text-muted-foreground">
               {plan.features.map((feature) => (
                 <li key={feature} className="flex items-center gap-3">
                   <div className="h-2 w-2 rounded-full bg-primary" />
@@ -147,7 +147,7 @@ export function BillingPlanGrid({
               ))}
             </ul>
             <Button
-              className="mt-6 rounded-full"
+              className="mt-7 rounded-full"
               variant={plan.key === currentPlanKey ? "outline" : "default"}
               disabled={
                 isAdmin ||
@@ -170,7 +170,7 @@ export function BillingPlanGrid({
       </div>
 
       {isAdmin ? (
-        <div className="soft-panel flex flex-col items-start justify-between gap-3 px-6 py-5 sm:flex-row sm:items-center">
+        <div className="soft-panel flex flex-col items-start justify-between gap-4 px-7 py-6 sm:flex-row sm:items-center">
           <div>
             <h3 className="text-xl font-semibold">Admin access policy</h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -180,7 +180,7 @@ export function BillingPlanGrid({
           </div>
         </div>
       ) : currentSubscriptionId ? (
-        <div className="soft-panel flex flex-col items-start justify-between gap-3 px-6 py-5 sm:flex-row sm:items-center">
+        <div className="soft-panel flex flex-col items-start justify-between gap-4 px-7 py-6 sm:flex-row sm:items-center">
           <div>
             <h3 className="text-xl font-semibold">Subscription controls</h3>
             <p className="mt-1 text-sm text-muted-foreground">

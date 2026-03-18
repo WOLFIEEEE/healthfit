@@ -1,8 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Mail, ShieldCheck, Sparkles } from "lucide-react";
 import { GuestCheckoutForm } from "@/components/marketing/guest-checkout-form";
 import { BrandMark } from "@/components/healthfit/brand-mark";
 import { planCatalog } from "@/lib/config/plans";
+import { buildNoIndexMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = buildNoIndexMetadata({
+  title: "Checkout",
+  description: "Guest checkout flow for Healthfit.ai paid plans.",
+});
 
 export default async function GuestCheckoutPage(props: {
   searchParams: Promise<{
@@ -38,8 +45,8 @@ export default async function GuestCheckoutPage(props: {
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[1.02fr_1fr] lg:items-start">
-          <section className="rounded-[2.2rem] border border-border/60 bg-[#23412f] px-6 py-7 text-white shadow-[0_40px_100px_-50px_rgba(20,43,31,0.85)] sm:px-8 sm:py-9">
+        <div className="mt-10 grid gap-10 lg:grid-cols-[1.02fr_1fr] lg:items-start">
+          <section className="rounded-[2.2rem] border border-border/60 bg-[#23412f] px-7 py-9 text-white shadow-[0_40px_100px_-50px_rgba(20,43,31,0.85)] sm:px-10 sm:py-11">
             <p className="text-xs font-medium uppercase tracking-[0.32em] text-emerald-200/70">
               Smooth purchase flow
             </p>
@@ -52,7 +59,7 @@ export default async function GuestCheckoutPage(props: {
               workspace is activated once the purchase clears.
             </p>
 
-            <div className="mt-8 grid gap-4">
+            <div className="mt-10 grid gap-5">
               {[
                 {
                   icon: Sparkles,
@@ -75,7 +82,7 @@ export default async function GuestCheckoutPage(props: {
                 return (
                   <div
                     key={item.title}
-                    className="rounded-[1.6rem] border border-white/10 bg-white/6 px-5 py-5 backdrop-blur-sm"
+                    className="rounded-[1.6rem] border border-white/10 bg-white/6 px-6 py-6 backdrop-blur-sm"
                   >
                     <div className="flex items-start gap-4">
                       <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white/10">

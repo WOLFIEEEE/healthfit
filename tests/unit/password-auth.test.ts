@@ -3,9 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
   signUp: vi.fn(),
+  generateLink: vi.fn(),
+  sendSignupConfirmationEmail: vi.fn(),
   ensureAppUserRecord: vi.fn(),
   redirect: vi.fn(),
   hasSupabasePublicEnv: vi.fn(),
+  hasSupabaseAdminEnv: vi.fn(),
+  hasResendEmailEnv: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -20,8 +24,23 @@ vi.mock("@/lib/config/app-url", () => ({
   resolveAppUrl: () => "https://healthfit.example",
 }));
 
+vi.mock("@/lib/email/flows", () => ({
+  sendSignupConfirmationEmail: mocks.sendSignupConfirmationEmail,
+}));
+
+vi.mock("@/lib/email/resend", () => ({
+  hasResendEmailEnv: mocks.hasResendEmailEnv,
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  getAdminAuthClient: () => ({
+    generateLink: mocks.generateLink,
+  }),
+}));
+
 vi.mock("@/lib/supabase/env", () => ({
   hasSupabasePublicEnv: mocks.hasSupabasePublicEnv,
+  hasSupabaseAdminEnv: mocks.hasSupabaseAdminEnv,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -42,10 +61,16 @@ describe("password auth actions", () => {
   beforeEach(() => {
     mocks.signInWithPassword.mockReset();
     mocks.signUp.mockReset();
+    mocks.generateLink.mockReset();
+    mocks.sendSignupConfirmationEmail.mockReset();
     mocks.ensureAppUserRecord.mockReset();
     mocks.redirect.mockReset();
     mocks.hasSupabasePublicEnv.mockReset();
+    mocks.hasSupabaseAdminEnv.mockReset();
+    mocks.hasResendEmailEnv.mockReset();
     mocks.hasSupabasePublicEnv.mockReturnValue(true);
+    mocks.hasSupabaseAdminEnv.mockReturnValue(false);
+    mocks.hasResendEmailEnv.mockReturnValue(false);
     mocks.redirect.mockImplementation((path: string) => {
       throw new Error(`REDIRECT:${path}`);
     });
@@ -126,6 +151,55 @@ describe("password auth actions", () => {
       },
     });
     expect(mocks.ensureAppUserRecord).not.toHaveBeenCalled();
+  });
+
+  it("uses the custom Resend confirmation flow when email delivery and admin auth are configured", async () => {
+    mocks.hasSupabaseAdminEnv.mockReturnValue(true);
+    mocks.hasResendEmailEnv.mockReturnValue(true);
+    mocks.generateLink.mockResolvedValue({
+      data: {
+        properties: {
+          hashed_token: "hashed-signup-token",
+          verification_type: "signup",
+        },
+      },
+      error: null,
+    });
+    mocks.sendSignupConfirmationEmail.mockResolvedValue({ id: "email_123" });
+
+    const formData = new FormData();
+    formData.set("fullName", "New Member");
+    formData.set("email", "new@example.com");
+    formData.set("password", "SuperSecret123");
+    formData.set("confirmPassword", "SuperSecret123");
+    formData.set("next", "/dashboard/coach");
+
+    const result = await signUpWithPassword(null, formData);
+
+    expect(result).toEqual({
+      success: true,
+      data: "Account created. Check your email to confirm your address and finish signing in.",
+    });
+    expect(mocks.generateLink).toHaveBeenCalledWith({
+      type: "signup",
+      email: "new@example.com",
+      password: "SuperSecret123",
+      options: {
+        data: {
+          full_name: "New Member",
+        },
+        redirectTo:
+          "https://healthfit.example/api/auth/callback?next=%2Fdashboard%2Fcoach",
+      },
+    });
+    expect(mocks.sendSignupConfirmationEmail).toHaveBeenCalledWith({
+      email: "new@example.com",
+      fullName: "New Member",
+      confirmationLink:
+        "https://healthfit.example/api/auth/callback?token_hash=hashed-signup-token&type=signup&next=%2Fdashboard%2Fcoach",
+      nextPath: "/dashboard/coach",
+    });
+    expect(mocks.signUp).not.toHaveBeenCalled();
   });
 
   it("rejects mismatched passwords during sign-up", async () => {

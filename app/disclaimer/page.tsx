@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
 import { LegalShell } from "@/components/marketing/legal-shell";
+import { buildPublicMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = buildPublicMetadata({
+  title: "Wellness Disclaimer",
+  description:
+    "Healthfit.ai provides wellness guidance only and does not replace medical diagnosis, treatment, or emergency care.",
+  path: "/disclaimer",
+  keywords: ["healthfit.ai disclaimer", "wellness app medical disclaimer"],
+});
 
 export default function DisclaimerPage() {
   return (

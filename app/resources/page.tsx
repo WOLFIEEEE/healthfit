@@ -3,7 +3,6 @@ import { FileText, Library, ShieldCheck } from "lucide-react";
 import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { ResourceCard } from "@/components/resources/resource-card";
-import { siteConfig } from "@/lib/config/site";
 import {
   getFeaturedResources,
   getResourcesByCategory,
@@ -12,33 +11,25 @@ import {
   resourceCategories,
   resourceEntries,
 } from "@/lib/content/resources";
+import { buildPublicMetadata, siteUrl } from "@/lib/seo/metadata";
 
 const guides = getResourcesByKind("guide");
 const articles = getResourcesByKind("article");
 const featuredResources = getFeaturedResources();
-const siteUrl = siteConfig.url.replace(/\/$/, "");
 const resourcesDescription =
   "Research-backed public health guides and articles built from CDC, NIH, USDA, FDA, and HHS guidance.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPublicMetadata({
   title: "Health Resources",
   description: resourcesDescription,
+  path: "/resources",
   keywords: [
     "health resources",
     "evidence based wellness articles",
     "cdc nutrition and fitness guidance",
     "research backed health guides",
   ],
-  alternates: {
-    canonical: "/resources",
-  },
-  openGraph: {
-    title: "Healthfit.ai Resources",
-    description: resourcesDescription,
-    url: `${siteUrl}/resources`,
-    type: "website",
-  },
-};
+});
 
 const collectionStructuredData = {
   "@context": "https://schema.org",
@@ -48,7 +39,7 @@ const collectionStructuredData = {
   url: `${siteUrl}/resources`,
   isPartOf: {
     "@type": "WebSite",
-    name: siteConfig.name,
+    name: "Healthfit.ai",
     url: siteUrl,
   },
   mainEntity: {

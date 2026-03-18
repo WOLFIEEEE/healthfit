@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
 import { LegalShell } from "@/components/marketing/legal-shell";
+import { buildPublicMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = buildPublicMetadata({
+  title: "Billing Policy",
+  description:
+    "Understand Healthfit.ai subscription billing, plan changes, renewals, and policy expectations.",
+  path: "/billing-policy",
+  keywords: ["healthfit.ai billing policy", "subscription billing policy"],
+});
 
 export default function BillingPolicyPage() {
   return (

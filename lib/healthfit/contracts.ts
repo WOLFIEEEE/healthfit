@@ -130,6 +130,23 @@ export type CoachAction =
     }
   | {
       id: string;
+      type: "log_check_in";
+      label: string;
+      description: string;
+      payload: {
+        periodType?: "daily" | "weekly";
+        moodScore: number;
+        energyScore: number;
+        stressScore: number;
+        adherenceScore: number;
+        sleepHours: number;
+        wins?: string;
+        blockers?: string;
+        notes?: string;
+      };
+    }
+  | {
+      id: string;
       type: "replan_week";
       label: string;
       description: string;
@@ -368,6 +385,23 @@ export const coachActionSchema = z.discriminatedUnion("type", [
   }),
   z.object({
     id: z.string(),
+    type: z.literal("log_check_in"),
+    label: z.string(),
+    description: z.string(),
+    payload: z.object({
+      periodType: z.enum(["daily", "weekly"]).optional(),
+      moodScore: z.number().int().min(1).max(10),
+      energyScore: z.number().int().min(1).max(10),
+      stressScore: z.number().int().min(1).max(10),
+      adherenceScore: z.number().int().min(1).max(10),
+      sleepHours: z.number().min(0).max(16),
+      wins: z.string().optional(),
+      blockers: z.string().optional(),
+      notes: z.string().optional(),
+    }),
+  }),
+  z.object({
+    id: z.string(),
     type: z.literal("replan_week"),
     label: z.string(),
     description: z.string(),
@@ -417,6 +451,7 @@ export type CoachReply = {
     nextActions: string[];
     disclaimer: string;
     actions: CoachAction[];
+    loggedActions?: CoachAction[];
     context?: CoachContextSnapshot;
   };
 };

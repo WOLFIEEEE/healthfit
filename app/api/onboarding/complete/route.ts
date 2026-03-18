@@ -248,15 +248,16 @@ export async function POST(request: Request) {
         });
       }
 
-      await queueNotification({
-        userId,
-        type: "welcome",
-        title: "Welcome to Healthfit.ai",
-        body: "Your onboarding is complete. Your first weekly plan is ready.",
-        metadata: {
-          weekStartDate: programTemplate.weekStartDate,
-        },
-      });
+    });
+
+    await queueNotification({
+      userId,
+      type: "welcome",
+      title: "Welcome to Healthfit.ai",
+      body: "Your onboarding is complete. Your first weekly plan is ready.",
+      metadata: {
+        weekStartDate: programTemplate.weekStartDate,
+      },
     });
 
     await syncAuthMetadata({

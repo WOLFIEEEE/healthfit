@@ -6,6 +6,7 @@ import {
 import {
   renderMagicLinkEmail,
   renderPurchaseInviteEmail,
+  renderSignupConfirmationEmail,
   renderWelcomeEmail,
 } from "@/lib/email/templates";
 
@@ -70,6 +71,21 @@ describe("email templates", () => {
     expect(email.html).toContain("Welcome, Codex.");
     expect(email.html).toContain("Open your dashboard");
     expect(email.text).toContain("Build consistency with three low-friction sessions");
+  });
+
+  it("renders the branded signup confirmation email content", () => {
+    const email = renderSignupConfirmationEmail({
+      fullName: "Codex Member",
+      confirmationLink:
+        "https://healthfit.example/api/auth/callback?token_hash=abc&type=signup",
+      nextPath: "/onboarding",
+    });
+
+    expect(email.subject).toBe("Confirm your Healthfit.ai account");
+    expect(email.html).toContain("Confirm your account");
+    expect(email.html).toContain("Create account");
+    expect(email.text).toContain("/onboarding");
+    expect(email.text).toContain("token_hash=abc");
   });
 
   it("renders the branded purchase invite email content", () => {

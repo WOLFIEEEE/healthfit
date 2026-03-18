@@ -1,10 +1,17 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { AuthMethods } from "@/components/auth/auth-methods";
 import { BrandMark } from "@/components/healthfit/brand-mark";
 import { getUser } from "@/actions/get-user";
 import { resolveSafeNextPath } from "@/lib/auth/magic-links";
+import { buildNoIndexMetadata } from "@/lib/seo/metadata";
 import { Activity, Dumbbell, HeartPulse, Sparkles } from "lucide-react";
+
+export const metadata: Metadata = buildNoIndexMetadata({
+  title: "Sign In",
+  description: "Secure Healthfit.ai account sign in.",
+});
 
 export default async function LoginPage(props: {
   searchParams: Promise<{

@@ -26,7 +26,11 @@ test.describe("password authentication", () => {
         persistSession: false,
       },
     });
-    const sql = postgres(databaseUrl!, { ssl: "require" });
+    const sql = postgres(databaseUrl!, {
+      ssl: "require",
+      max: 1,
+      prepare: false,
+    });
     const email = `codex-password-e2e-${Date.now()}@example.com`;
     const password = "StrongPass!12345";
     let userId: string | null = null;

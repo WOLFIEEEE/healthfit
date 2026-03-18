@@ -125,8 +125,8 @@ export function OnboardingForm() {
   };
 
   return (
-    <div className="soft-panel px-6 py-6 sm:px-8">
-      <div className="flex flex-wrap gap-3">
+    <div className="soft-panel px-7 py-8 sm:px-10">
+      <div className="flex flex-wrap gap-3.5">
         {steps.map((item, index) => (
           <button
             key={item.title}
@@ -143,7 +143,7 @@ export function OnboardingForm() {
           </button>
         ))}
       </div>
-      <div className="mt-5">
+      <div className="mt-7">
         <p className="pill">{steps[step].title}</p>
         <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
           {steps[step].copy}
@@ -151,7 +151,7 @@ export function OnboardingForm() {
       </div>
 
       {step === 0 ? (
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <div className="mt-8 grid gap-5 md:grid-cols-2">
           <Input
             placeholder="Full name"
             value={form.fullName}
@@ -169,9 +169,9 @@ export function OnboardingForm() {
             }
             className="rounded-2xl bg-white/80"
           />
-          <div className="grid gap-2">
+          <div className="grid gap-3">
             <label className="text-sm font-medium">Experience level</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {["beginner", "intermediate", "advanced"].map((option) => (
                 <button
                   key={option}
@@ -191,9 +191,9 @@ export function OnboardingForm() {
               ))}
             </div>
           </div>
-          <div className="grid gap-2">
+          <div className="grid gap-3">
             <label className="text-sm font-medium">Activity level</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {["low", "moderate", "high"].map((option) => (
                 <button
                   key={option}
@@ -213,9 +213,9 @@ export function OnboardingForm() {
               ))}
             </div>
           </div>
-          <div className="grid gap-2 md:col-span-2">
+          <div className="grid gap-3 md:col-span-2">
             <label className="text-sm font-medium">Primary goal</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {[
                 ["fat_loss", "Fat loss"],
                 ["muscle_gain", "Muscle gain"],
@@ -253,10 +253,10 @@ export function OnboardingForm() {
       ) : null}
 
       {step === 1 ? (
-        <div className="mt-6 grid gap-4">
-          <div className="grid gap-2">
+        <div className="mt-8 grid gap-5">
+          <div className="grid gap-3">
             <label className="text-sm font-medium">Workout days</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {workoutDayOptions.map((day) => (
                 <button
                   key={day}
@@ -274,7 +274,7 @@ export function OnboardingForm() {
               ))}
             </div>
           </div>
-          <div className="grid gap-2 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2">
             <Input
               type="number"
               placeholder="Session length (minutes)"
@@ -297,9 +297,9 @@ export function OnboardingForm() {
               className="rounded-2xl bg-white/80"
             />
           </div>
-          <div className="grid gap-2">
+          <div className="grid gap-3">
             <label className="text-sm font-medium">Available equipment</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {equipmentOptions.map((option) => (
                 <button
                   key={option}
@@ -321,10 +321,10 @@ export function OnboardingForm() {
       ) : null}
 
       {step === 2 ? (
-        <div className="mt-6 grid gap-4">
-          <div className="grid gap-2">
+        <div className="mt-8 grid gap-5">
+          <div className="grid gap-3">
             <label className="text-sm font-medium">Dietary preferences</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2.5">
               {dietaryOptions.map((option) => (
                 <button
                   key={option}
@@ -342,7 +342,7 @@ export function OnboardingForm() {
               ))}
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-3">
             <Input
               type="number"
               placeholder="Hydration target (ml)"
@@ -414,7 +414,7 @@ export function OnboardingForm() {
         </div>
       ) : null}
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
         <p className="max-w-xl text-xs leading-6 text-muted-foreground">
           By continuing, you confirm this is a wellness product, not a medical
           service, and that you will seek qualified professional care for urgent

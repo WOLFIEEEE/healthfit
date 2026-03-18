@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   generateLink: vi.fn(),
   sendMagicLinkEmail: vi.fn(),
   hasResendEmailEnv: vi.fn(),
+  hasSupabaseAdminEnv: vi.fn(),
 }));
 
 vi.mock("@/lib/config/app-url", () => ({
@@ -13,6 +14,7 @@ vi.mock("@/lib/config/app-url", () => ({
 
 vi.mock("@/lib/supabase/env", () => ({
   hasSupabasePublicEnv: () => true,
+  hasSupabaseAdminEnv: mocks.hasSupabaseAdminEnv,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -45,6 +47,8 @@ describe("sendMagicLink", () => {
     mocks.generateLink.mockReset();
     mocks.sendMagicLinkEmail.mockReset();
     mocks.hasResendEmailEnv.mockReset();
+    mocks.hasSupabaseAdminEnv.mockReset();
+    mocks.hasSupabaseAdminEnv.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -108,6 +112,24 @@ describe("sendMagicLink", () => {
           "https://healthfit.example/api/auth/callback?next=%2Fdashboard%2Fbilling",
       },
     });
+    expect(mocks.generateLink).not.toHaveBeenCalled();
+  });
+
+  it("falls back to Supabase email delivery when admin auth is unavailable", async () => {
+    mocks.hasResendEmailEnv.mockReturnValue(true);
+    mocks.hasSupabaseAdminEnv.mockReturnValue(false);
+    mocks.signInWithOtp.mockResolvedValue({ error: null });
+
+    const formData = new FormData();
+    formData.set("email", "member@example.com");
+
+    const result = await sendMagicLink(null, formData);
+
+    expect(result).toEqual({
+      success: true,
+      data: "Sign-in email sent. Check your inbox to continue.",
+    });
+    expect(mocks.signInWithOtp).toHaveBeenCalled();
     expect(mocks.generateLink).not.toHaveBeenCalled();
   });
 });

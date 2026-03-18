@@ -26,9 +26,9 @@ export function AdaptiveProgramCard({
   const [isPending, startTransition] = useTransition();
 
   return (
-    <section className="soft-panel px-6 py-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
+    <section className="soft-panel px-8 py-10 sm:px-10">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
           <p className="pill">Adaptive planning</p>
           <h2 className="mt-4 text-2xl font-semibold">{mode}</h2>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
@@ -46,20 +46,20 @@ export function AdaptiveProgramCard({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[1.5rem] bg-white/75 px-4 py-4">
+      <div className="mt-7 grid gap-5 2xl:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
+        <div className="surface-card min-w-0 px-5 py-5">
           <p className="text-sm text-muted-foreground">Why this matters</p>
           <p className="mt-2 text-sm leading-7 text-foreground">{reason}</p>
           <p className="mt-4 text-sm text-muted-foreground">Current AI focus</p>
           <p className="mt-2 text-sm leading-7 text-foreground">{focus}</p>
         </div>
-        <div className="rounded-[1.5rem] bg-white/75 px-4 py-4">
+        <div className="surface-card min-w-0 px-5 py-5">
           <p className="text-sm text-muted-foreground">What the replanner will reinforce</p>
-          <div className="mt-3 grid gap-2">
+          <div className="mt-4 grid gap-3">
             {nextActions.map((action) => (
               <div
                 key={action}
-                className="rounded-2xl border border-border/60 px-3 py-3 text-sm text-foreground"
+                className="rounded-2xl border border-border/60 px-4 py-3.5 text-sm text-foreground"
               >
                 {action}
               </div>
@@ -68,7 +68,7 @@ export function AdaptiveProgramCard({
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-7 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">
           Rebuild the active week from your latest adherence, recovery, and coach context.
         </p>

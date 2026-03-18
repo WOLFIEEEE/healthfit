@@ -43,12 +43,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl);
   }
 
-  if (pathname.startsWith("/admin") && role !== "admin") {
-    const dashboardUrl = request.nextUrl.clone();
-    dashboardUrl.pathname = "/dashboard/overview";
-    return NextResponse.redirect(dashboardUrl);
-  }
-
   if (pathname === "/login") {
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = onboardingCompleted || isAdmin

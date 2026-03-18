@@ -194,8 +194,8 @@ export function PasswordAuthForm(props: { nextPath?: string | null }) {
             Create account with password
           </Button>
           <p className="text-xs leading-6 text-muted-foreground">
-            If email confirmation is enabled on Supabase, we&apos;ll send a
-            verification email before the first password sign-in.
+            We&apos;ll send a secure confirmation email before the first
+            password sign-in when verification is required.
           </p>
         </form>
       </TabsContent>

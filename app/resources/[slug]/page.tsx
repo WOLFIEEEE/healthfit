@@ -6,7 +6,6 @@ import { SiteFooter } from "@/components/marketing/site-footer";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { ResourceCard } from "@/components/resources/resource-card";
 import { ResourceSourceList } from "@/components/resources/resource-source-list";
-import { siteConfig } from "@/lib/config/site";
 import {
   getRelatedResources,
   getResourceBySlug,
@@ -14,14 +13,13 @@ import {
   getSourcesForResource,
   resourceEntries,
 } from "@/lib/content/resources";
+import { buildPublicMetadata, siteUrl } from "@/lib/seo/metadata";
 
 type ResourcePageProps = {
   params: Promise<{
     slug: string;
   }>;
 };
-
-const siteUrl = siteConfig.url.replace(/\/$/, "");
 
 export const dynamicParams = false;
 
@@ -42,18 +40,13 @@ export async function generateMetadata({
   }
 
   return {
-    title: resource.seoTitle,
-    description: resource.description,
-    keywords: resource.keywords,
-    alternates: {
-      canonical: `/resources/${resource.slug}`,
-    },
-    openGraph: {
+    ...buildPublicMetadata({
       title: resource.seoTitle,
       description: resource.description,
-      url: `${siteUrl}/resources/${resource.slug}`,
+      path: `/resources/${resource.slug}`,
       type: "article",
-    },
+      keywords: resource.keywords,
+    }),
   };
 }
 
@@ -85,12 +78,12 @@ export default async function ResourcePage({ params }: ResourcePageProps) {
     },
     publisher: {
       "@type": "Organization",
-      name: siteConfig.name,
+      name: "Healthfit.ai",
       url: siteUrl,
     },
     isPartOf: {
       "@type": "WebSite",
-      name: siteConfig.name,
+      name: "Healthfit.ai",
       url: siteUrl,
     },
     citation: sources.map((source) => source.url),

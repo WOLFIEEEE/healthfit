@@ -17,14 +17,14 @@ export function ProgressChart(props: {
   }>;
 }) {
   return (
-    <div className="soft-panel px-5 py-5">
-      <div className="mb-4">
+    <div className="soft-panel min-w-0 px-8 py-9 sm:px-10">
+      <div className="mb-6">
         <h3 className="text-xl font-semibold">Progress trends</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Weight and adherence over recent entries.
         </p>
       </div>
-      <div className="h-72 w-full">
+      <div className="h-80 w-full lg:h-[22rem] 2xl:h-[24rem]">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={props.data}>
             <XAxis

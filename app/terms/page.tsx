@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
 import { LegalShell } from "@/components/marketing/legal-shell";
+import { buildPublicMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = buildPublicMetadata({
+  title: "Terms of Service",
+  description:
+    "Review the Healthfit.ai terms for subscriptions, wellness usage, and account responsibilities.",
+  path: "/terms",
+  keywords: ["healthfit.ai terms", "wellness software terms"],
+});
 
 export default function TermsPage() {
   return (

@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
 import { LegalShell } from "@/components/marketing/legal-shell";
+import { buildPublicMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = buildPublicMetadata({
+  title: "Privacy Policy",
+  description:
+    "Read how Healthfit.ai handles account, billing, and wellness data across the product.",
+  path: "/privacy",
+  keywords: ["healthfit.ai privacy", "wellness app privacy policy"],
+});
 
 export default function PrivacyPage() {
   return (

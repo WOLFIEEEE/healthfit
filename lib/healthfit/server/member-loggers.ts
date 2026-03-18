@@ -1,8 +1,18 @@
 import { format } from "date-fns";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/drizzle/client";
-import { habitLogs, habitTemplates, mealLogs, workoutLogs } from "@/lib/drizzle/schema";
+import {
+  checkIns,
+  habitLogs,
+  habitTemplates,
+  mealLogs,
+  memberProfiles,
+  progressMetrics,
+  workoutLogs,
+} from "@/lib/drizzle/schema";
 import { createId } from "@/lib/healthfit/ids";
+import { buildCheckInSummary } from "@/lib/healthfit/server/defaults";
+import { queueNotification } from "@/lib/healthfit/server/notifications";
 
 export async function logWorkoutEntry(props: {
   userId: string;
@@ -120,4 +130,71 @@ export async function upsertHabitLog(props: {
     });
 
   return habitTemplate;
+}
+
+export async function logCheckInEntry(props: {
+  userId: string;
+  periodType?: "daily" | "weekly";
+  moodScore: number;
+  energyScore: number;
+  stressScore: number;
+  adherenceScore: number;
+  sleepHours: number;
+  wins?: string;
+  blockers?: string;
+  notes?: string;
+}) {
+  const now = new Date().toISOString();
+  const summary = buildCheckInSummary({
+    moodScore: props.moodScore,
+    energyScore: props.energyScore,
+    stressScore: props.stressScore,
+    adherenceScore: props.adherenceScore,
+  });
+
+  await db.insert(checkIns).values({
+    id: createId("checkin"),
+    userId: props.userId,
+    periodType: props.periodType ?? "daily",
+    moodScore: props.moodScore,
+    energyScore: props.energyScore,
+    stressScore: props.stressScore,
+    adherenceScore: props.adherenceScore,
+    sleepHours: props.sleepHours,
+    wins: props.wins,
+    blockers: props.blockers,
+    notes: props.notes,
+    aiSummary: summary,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  await db
+    .update(memberProfiles)
+    .set({
+      lastCheckInAt: now,
+      updatedAt: now,
+    })
+    .where(eq(memberProfiles.userId, props.userId));
+
+  await db.insert(progressMetrics).values({
+    id: createId("metric"),
+    userId: props.userId,
+    metricType: "adherence",
+    value: props.adherenceScore,
+    unit: "score",
+    note: "Generated from check-in",
+    recordedAt: now,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  await queueNotification({
+    userId: props.userId,
+    type: "checkin_saved",
+    title: "Check-in saved",
+    body: "Your latest wellness check-in has been captured.",
+  });
+
+  return summary;
 }

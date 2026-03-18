@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
 import { LegalShell } from "@/components/marketing/legal-shell";
+import { buildPublicMetadata } from "@/lib/seo/metadata";
+
+export const metadata: Metadata = buildPublicMetadata({
+  title: "Contact",
+  description: "Contact Healthfit.ai for support, sales, and partnership questions.",
+  path: "/contact",
+  keywords: ["healthfit.ai contact", "wellness app support", "healthfit.ai help"],
+});
 
 export default function ContactPage() {
   return (
